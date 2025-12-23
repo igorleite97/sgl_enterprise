@@ -1,34 +1,69 @@
 from app.db.memory import db, now
 from app.core.enums import StatusProcesso, StatusCotacaoItem
+from app.domains.disputa.enums import StatusDisputa, StatusDisputaItem
+from app.domains.disputa.models import Disputa, DisputaItem
+
+MARKUP_MINIMO_PADRAO = 1.30
 
 
-def _existe_item_cotado(oportunidade_id: str) -> bool:
+def iniciar_disputa(oportunidade_id: int) -> Disputa:
     """
-    Regra crítica:
-    Só permite avançar para disputa se existir ao menos
-    um item com status COTADO.
+    Inicia a disputa e cria automaticamente os DisputaItem
+    apenas para itens com status COTADO.
     """
-    for cotacao in db["cotacoes"]:
-        if (
-            cotacao["oportunidade_id"] == oportunidade_id
-            and cotacao["status"] == StatusCotacaoItem.COTADO
-        ):
-            return True
-    return False
 
+    # Validação crítica
+    cotacoes_cotadas = [
+        c for c in db["cotacoes"].values()
+        if c["oportunidade_id"] == oportunidade_id
+        and c["status"] == StatusCotacaoItem.COTADO
+    ]
 
-def iniciar_disputa(oportunidade_id: str):
-    # Regra obrigatória
-    if not _existe_item_cotado(oportunidade_id):
+    if not cotacoes_cotadas:
         raise ValueError(
             "Não é possível iniciar a disputa: nenhum item foi cotado."
         )
 
     # Atualiza status do processo
-    for processo in db["oportunidades"]:
-        if processo["id"] == oportunidade_id:
-            processo["status"] = StatusProcesso.DISPUTA
-            processo["atualizado_em"] = now()
-            return processo
+    for oportunidade in db["oportunidades"].values():
+        if oportunidade["id"] == oportunidade_id:
+            oportunidade["status"] = StatusProcesso.DISPUTA
+            oportunidade["atualizado_em"] = now()
+            break
+    else:
+        raise ValueError("Oportunidade não encontrada.")
 
-    raise ValueError("Oportunidade não encontrada.")
+    # Cria Disputa
+    disputa_id = len(db["disputas"]) + 1
+
+    disputa = Disputa(
+        id=disputa_id,
+        oportunidade_id=oportunidade_id,
+        status=StatusDisputa.ABERTA,
+        criada_em=now(),
+    )
+
+    db["disputas"][disputa_id] = disputa
+
+    # Cria DisputaItem para cada cotação
+    for cotacao in cotacoes_cotadas:
+        disputa_item_id = len(db["disputa_itens"]) + 1
+
+        preco_base = cotacao["preco_unitario"]
+        preco_minimo = preco_base * MARKUP_MINIMO_PADRAO
+
+        disputa_item = DisputaItem(
+            id=disputa_item_id,
+            disputa_id=disputa_id,
+            item_id=cotacao["item_id"],
+            preco_base=preco_base,
+            markup_aplicado=MARKUP_MINIMO_PADRAO,
+            preco_minimo_permitido=preco_minimo,
+            preco_atual=preco_minimo,
+            autorizacao_excecao=False,
+            status=StatusDisputaItem.AGUARDANDO_LANCE,
+        )
+
+        db["disputa_itens"][disputa_item_id] = disputa_item
+
+    return disputa

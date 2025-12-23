@@ -13,3 +13,6 @@ db = {
     "contratos": [],
     "compras": []
 }
+
+db["disputas"] = {}
+db["disputas_itens"] = {}
