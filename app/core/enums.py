@@ -28,3 +28,10 @@ from enum import Enum
 class StatusCotacaoItem(str, Enum):
     COTADO = "COTADO"
     DESISTIDO = "DESISTIDO"
+
+from enum import Enum
+
+
+class PerfilUsuario(str, Enum):
+    ANALISTA = "ANALISTA"
+    GESTOR = "ANALISTA"

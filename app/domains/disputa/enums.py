@@ -1,12 +1,16 @@
 from enum import Enum
 
 
-class StatusDisputa(str, Enum):
-    ABERTA = "ABERTA"
-    ENCERRADA = "ENCERRADA"
+class StatusDisputa(Enum):
+    ABERTA = "aberta"
+    ENCERRADA = "encerrada"
 
 
-class StatusDisputaItem(str, Enum):
-    AGUARDANDO_LANCE = "AGUARDANDO_LANCE"
-    EM_LANCE = "EM_LANCE"
-    FINALIZADO = "FINALIZADO"
+class StatusDisputaItem(Enum):
+    EM_DISPUTA = "em_disputa"
+    ENCERRADO = "encerrado"
+
+
+class ResultadoDisputaItem(Enum):
+    GANHO = "ganho"
+    PERDIDO = "perdido"

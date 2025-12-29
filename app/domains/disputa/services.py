@@ -1,69 +1,83 @@
 from app.db.memory import db, now
-from app.core.enums import StatusProcesso, StatusCotacaoItem
-from app.domains.disputa.enums import StatusDisputa, StatusDisputaItem
-from app.domains.disputa.models import Disputa, DisputaItem
-
-MARKUP_MINIMO_PADRAO = 1.30
+from app.domains.disputa.enums import (
+    StatusDisputa,
+    StatusDisputaItem,
+    ResultadoDisputaItem,
+)
+from app.domains.disputa.models import Disputa, DisputaItem, Lance
+from app.domains.disputa.constants import MARKUP_MINIMO_AUTORIZADO
+from app.core.enums import PerfilUsuario
 
 
 def iniciar_disputa(oportunidade_id: int) -> Disputa:
-    """
-    Inicia a disputa e cria automaticamente os DisputaItem
-    apenas para itens com status COTADO.
-    """
-
-    # Validação crítica
-    cotacoes_cotadas = [
-        c for c in db["cotacoes"].values()
-        if c["oportunidade_id"] == oportunidade_id
-        and c["status"] == StatusCotacaoItem.COTADO
-    ]
-
-    if not cotacoes_cotadas:
-        raise ValueError(
-            "Não é possível iniciar a disputa: nenhum item foi cotado."
-        )
-
-    # Atualiza status do processo
-    for oportunidade in db["oportunidades"].values():
-        if oportunidade["id"] == oportunidade_id:
-            oportunidade["status"] = StatusProcesso.DISPUTA
-            oportunidade["atualizado_em"] = now()
-            break
-    else:
-        raise ValueError("Oportunidade não encontrada.")
-
-    # Cria Disputa
-    disputa_id = len(db["disputas"]) + 1
-
     disputa = Disputa(
-        id=disputa_id,
+        id=len(db["disputas"]) + 1,
         oportunidade_id=oportunidade_id,
         status=StatusDisputa.ABERTA,
         criada_em=now(),
     )
-
-    db["disputas"][disputa_id] = disputa
-
-    # Cria DisputaItem para cada cotação
-    for cotacao in cotacoes_cotadas:
-        disputa_item_id = len(db["disputa_itens"]) + 1
-
-        preco_base = cotacao["preco_unitario"]
-        preco_minimo = preco_base * MARKUP_MINIMO_PADRAO
-
-        disputa_item = DisputaItem(
-            id=disputa_item_id,
-            disputa_id=disputa_id,
-            item_id=cotacao["item_id"],
-            preco_base=preco_base,
-            markup_aplicado=MARKUP_MINIMO_PADRAO,
-            preco_minimo_permitido=preco_minimo,
-            preco_atual=preco_minimo,
-            autorizacao_excecao=False,
-            status=StatusDisputaItem.AGUARDANDO_LANCE,
-        )
-
-        db["disputa_itens"][disputa_item_id] = disputa_item
-
+    db["disputas"].append(disputa)
     return disputa
+
+
+def registrar_lance(
+    disputa_item_id: int,
+    preco_unitario: float,
+    quantidade: int,
+    markup_real: float,
+    posicao_final: int,
+    lance_vencedor: float | None,
+    perfil_usuario: PerfilUsuario,
+) -> Lance:
+    """
+    Regras:
+    - Markup mínimo padrão: 1.30
+    - Apenas GESTOR pode autorizar exceção
+    """
+
+    if markup_real < MARKUP_MINIMO_AUTORIZADO:
+        if perfil_usuario != PerfilUsuario.GESTOR:
+            raise PermissionError(
+                "Apenas gestores podem registrar lance abaixo do markup mínimo."
+            )
+        autorizacao_excecao = True
+    else:
+        autorizacao_excecao = False
+
+    preco_total = preco_unitario * quantidade
+
+    lance = Lance(
+        id=len(db["lances"]) + 1,
+        disputa_item_id=disputa_item_id,
+        preco_unitario_lance=preco_unitario,
+        quantidade=quantidade,
+        preco_total_lance=preco_total,
+        markup_aplicado_real=markup_real,
+        posicao_final=posicao_final,
+        lance_vencedor=lance_vencedor,
+        abaixo_markup_minimo=markup_real < MARKUP_MINIMO_AUTORIZADO,
+        autorizacao_excecao=autorizacao_excecao,
+        criado_em=now(),
+    )
+
+    db["lances"].append(lance)
+    return lance
+
+
+def encerrar_disputa_item(
+    disputa_item: DisputaItem,
+    posicao_final: int,
+):
+    if posicao_final == 1:
+        disputa_item.resultado_final = ResultadoDisputaItem.GANHO
+        disputa_item.em_monitoramento_pos = False
+
+    elif 2 <= posicao_final <= 10:
+        disputa_item.resultado_final = ResultadoDisputaItem.PERDIDO
+        disputa_item.em_monitoramento_pos = True
+
+    else:
+        disputa_item.resultado_final = ResultadoDisputaItem.PERDIDO
+        disputa_item.em_monitoramento_pos = False
+
+    disputa_item.status = StatusDisputaItem.ENCERRADO

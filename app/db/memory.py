@@ -1,18 +1,11 @@
 from datetime import datetime
 
-
 def now():
-    return datetime.utcnow().isoformat()
-
+    return datetime.utcnow()
 
 db = {
-    "oportunidades": [],
-    "oportunidades_itens": {},   # itens por oportunidade
-    "analises_edital": [],
-    "cotacoes": [],
-    "contratos": [],
-    "compras": []
+    "captacoes": [],
+    "disputas": [],
+    "disputa_itens": [],
+    "lances": [],
 }
-
-db["disputas"] = {}
-db["disputas_itens"] = {}
