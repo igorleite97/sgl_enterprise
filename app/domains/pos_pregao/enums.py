@@ -1,0 +1,24 @@
+from enum import Enum
+
+
+class TipoResultadoInicial(str, Enum):
+    GANHO = "GANHO"
+    PERDIDO_MONITORAVEL = "PERDIDO_MONITORAVEL"
+
+
+class StatusPosPregao(str, Enum):
+    # Comum
+    ENCERRADO = "ENCERRADO"
+
+    # Fluxo de ganho
+    ARREMATANTE = "ARREMATANTE"
+    EM_HABILITACAO = "EM_HABILITACAO"
+    HABILITADO = "HABILITADO"
+    ADJUDICADO = "ADJUDICADO"
+    CONTRATO_RECEBIDO = "CONTRATO_RECEBIDO"
+    EMPENHO_RECEBIDO = "EMPENHO_RECEBIDO"
+
+    # Fluxo de perda monitorável
+    PERDIDO_MONITORAVEL = "PERDIDO_MONITORAVEL"
+    AGUARDANDO_QUEDA = "AGUARDANDO_QUEDA"
+    CONVOCADO = "CONVOCADO"

@@ -8,11 +8,14 @@ from app.domains.disputa.services import (
     encerrar_disputa_item,
 )
 from app.domains.disputa.models import DisputaItem
+from app.db.memory import db
 from app.core.enums import PerfilUsuario
 
 
-router = APIRouter()
-
+router = APIRouter(
+    prefix="/disputa",
+    tags=["Disputa"],
+)
 
 # =========================
 # Schemas (Swagger)
@@ -70,7 +73,6 @@ def api_registrar_lance(payload: RegistrarLanceRequest):
 @router.post("/encerrar-item", summary="Encerrar disputa de um item")
 def api_encerrar_disputa_item(payload: EncerrarDisputaItemRequest):
     try:
-        # Busca simples no banco em memória
         disputa_item = next(
             (i for i in db["disputa_itens"] if i.id == payload.disputa_item_id),
             None,

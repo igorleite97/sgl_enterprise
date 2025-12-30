@@ -8,4 +8,5 @@ db = {
     "disputas": [],
     "disputa_itens": [],
     "lances": [],
+    "pos_pregao_itens": [],
 }

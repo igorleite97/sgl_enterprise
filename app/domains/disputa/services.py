@@ -7,6 +7,7 @@ from app.domains.disputa.enums import (
 from app.domains.disputa.models import Disputa, DisputaItem, Lance
 from app.domains.disputa.constants import MARKUP_MINIMO_AUTORIZADO
 from app.core.enums import PerfilUsuario
+from app.domains.pos_pregao.services import iniciar_pos_pregao
 
 
 def iniciar_disputa(oportunidade_id: int) -> Disputa:
@@ -68,6 +69,12 @@ def encerrar_disputa_item(
     disputa_item: DisputaItem,
     posicao_final: int,
 ):
+    """
+    Encerra o item de disputa e,
+    se aplicável, cria automaticamente o Pós-Pregão.
+    """
+
+    # Define resultado
     if posicao_final == 1:
         disputa_item.resultado_final = ResultadoDisputaItem.GANHO
         disputa_item.em_monitoramento_pos = False
@@ -81,3 +88,7 @@ def encerrar_disputa_item(
         disputa_item.em_monitoramento_pos = False
 
     disputa_item.status = StatusDisputaItem.ENCERRADO
+
+    # 🔗 Amarra automaticamente com Pós-Pregão
+    if posicao_final <= 10:
+        iniciar_pos_pregao(disputa_item)
