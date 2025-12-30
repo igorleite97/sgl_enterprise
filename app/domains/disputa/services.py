@@ -8,6 +8,9 @@ from app.domains.disputa.models import Disputa, DisputaItem, Lance
 from app.domains.disputa.constants import MARKUP_MINIMO_AUTORIZADO
 from app.core.enums import PerfilUsuario
 from app.domains.pos_pregao.services import iniciar_pos_pregao
+from app.domains.timeline.services import registrar_evento
+from app.domains.timeline.enums import TipoEventoTimeline, OrigemEvento
+
 
 
 def iniciar_disputa(oportunidade_id: int) -> Disputa:
@@ -62,8 +65,22 @@ def registrar_lance(
     )
 
     db["lances"].append(lance)
-    return lance
 
+    # ✅ Timeline corretamente acoplada ao domínio
+    registrar_evento(
+        entidade="LANCE",
+        entidade_id=lance.id,
+        tipo_evento=TipoEventoTimeline.DECISAO,
+        descricao=(
+            f"Lance registrado com markup {markup_real}. "
+            f"Posição final: {posicao_final}. "
+            f"{'Com exceção autorizada.' if autorizacao_excecao else 'Sem exceção.'}"
+        ),
+        origem=OrigemEvento.USUARIO,
+        usuario=perfil_usuario.value,
+    )
+
+    return lance
 
 def encerrar_disputa_item(
     disputa_item: DisputaItem,
@@ -71,10 +88,15 @@ def encerrar_disputa_item(
 ):
     """
     Encerra o item de disputa e,
-    se aplicável, cria automaticamente o Pós-Pregão.
+    se aplicável, inicia automaticamente o Pós-Pregão
+    e registra eventos de timeline.
     """
 
-    # Define resultado
+    # Import tardio evita dependência circular
+    from app.domains.pos_pregao.services import iniciar_pos_pregao
+    from app.domains.timeline.services import registrar_evento
+    from app.domains.timeline.enums import TipoEventoTimeline, OrigemEvento
+
     if posicao_final == 1:
         disputa_item.resultado_final = ResultadoDisputaItem.GANHO
         disputa_item.em_monitoramento_pos = False
@@ -89,6 +111,16 @@ def encerrar_disputa_item(
 
     disputa_item.status = StatusDisputaItem.ENCERRADO
 
-    # 🔗 Amarra automaticamente com Pós-Pregão
+    registrar_evento(
+        entidade="DISPUTA_ITEM",
+        entidade_id=disputa_item.id,
+        tipo_evento=TipoEventoTimeline.ENCERRAMENTO,
+        descricao=f"Item encerrado na posição {posicao_final}.",
+        origem=OrigemEvento.SISTEMA,
+        usuario="system",
+    )
+
     if posicao_final <= 10:
         iniciar_pos_pregao(disputa_item)
+
+
