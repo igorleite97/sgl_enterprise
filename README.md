@@ -1,261 +1,116 @@
-RELATÓRIO TÉCNICO DO PROJETO
-SGL ENTERPRISE — Sistema de Gestão de Licitações
+SGL Enterprise
 
-Responsável técnico: Igor Leite de Andrade
-Arquitetura: Backend Python · FastAPI · Arquitetura orientada a domínios
-Objetivo do sistema: Gestão completa, auditável e rastreável do ciclo de vida de licitações públicas, do funil de captação ao pós-pregão.
+Sistema de Gestão de Licitações – Arquitetura Orientada a Domínio
 
-1. VISÃO GERAL DO PROJETO
+Visão Geral
 
-O SGL Enterprise foi concebido como um sistema corporativo, auditável e orientado a processo, cobrindo todo o ciclo operacional de licitações:
+O SGL Enterprise é uma plataforma corporativa para gestão integral do ciclo de licitações, desde a captação de oportunidades até o pós-pregão, com foco em governança, rastreabilidade, tomada de decisão orientada a risco e auditoria completa do processo.
 
-Captação
+O sistema foi concebido para refletir fielmente a realidade operacional de empresas que atuam em licitações públicas, tratando cada etapa como um domínio de negócio independente, porém integrado.
 
-Análise de Edital
+Princípios Arquiteturais
 
-Cotação
-
-Disputa (por item)
-
-Pós-Pregão
-
-Auditoria via Timeline transversal
-
-A arquitetura evita CRUD ingênuo e privilegia:
-
-Regras de negócio explícitas
-
-Eventos de domínio
-
-Rastreamento de decisões
+Arquitetura Orientada a Domínio (DDD)
+Cada fase do processo licitatório é modelada como um domínio explícito.
 
 Separação clara de responsabilidades
+APIs, serviços, modelos, enums e regras de negócio são isolados por domínio.
 
-2. ARQUITETURA IMPLEMENTADA
-2.1 Estrutura Geral
+Auditoria transversal (Timeline)
+Todas as decisões relevantes e mudanças de estado são registradas de forma cronológica, auditável e rastreável.
 
-FastAPI como framework principal
+Decisão no nível correto
+Especial atenção à Disputa por Item, onde preço, markup e risco realmente existem.
 
-Organização por domínios de negócio
+Domínios Implementados
+📌 Captação
 
-Banco em memória (db) para validação conceitual
+Responsável pela identificação e registro de oportunidades de licitação.
 
-Serviços de domínio responsáveis por regras e mutações
+📄 Análise de Edital
 
-APIs atuando apenas como camada de orquestração
+Avaliação técnica, jurídica e operacional dos editais captados.
 
-app/
- ├─ core/
- ├─ db/
- ├─ domains/
- │   ├─ captacao/
- │   ├─ analise_edital/
- │   ├─ cotacao/
- │   ├─ disputa/
- │   ├─ pos_pregao/
- │   ├─ timeline/
- └─ main.py
+💰 Cotação
 
-3. FUNCIONALIDADES JÁ IMPLEMENTADAS (ESTADO ATUAL)
-3.1 Captação de Oportunidades ✅
+Estruturação de custos, preços e margens por item.
 
-Status: FUNCIONAL
+⚔️ Disputa
 
-Registro de oportunidades
+Gestão da fase competitiva da licitação, incluindo:
 
-Estrutura preparada para funil
-
-API ativa e integrada ao app principal
-
-Observação:
-Fase preparada para enriquecimento futuro (palavras-chave, filtros avançados).
-
-3.2 Análise de Edital ✅
-
-Status: FUNCIONAL
-
-Estrutura de análise criada
-
-Fluxo de aprovação / reprovação
-
-Integração via router
-
-Observação:
-Ainda não há eventos automáticos de status (previsto nos próximos passos).
-
-3.3 Cotação ✅
-
-Status: FUNCIONAL
-
-Fluxo de cotação implementado
-
-Integração com disputa
-
-Preparação correta para precificação por item
-
-3.4 Disputa (Nível de Item) ✅⚠️
-
-Status: FUNCIONAL COM ALTA MATURIDADE
-
-Implementações relevantes:
-
-Disputa ocorre por item, não por processo
-
-Registro de lances
-
-Cálculo de preço total
+Disputa por item
 
 Controle de markup mínimo
 
-Autorização de exceção restrita ao perfil GESTOR
+Exceções condicionadas ao perfil do usuário
 
-Encerramento de item com classificação:
+Registro de lances
 
-Ganhou
+🕒 Timeline (Auditoria)
 
-Perdeu (monitoramento pós-pregão ou não)
+Domínio transversal responsável por:
 
-Diferencial técnico:
+Registro cronológico de eventos
 
-Regras críticas corretamente no domínio
+Origem do evento (usuário, sistema, regra automática)
 
-Decisão de exceção auditável
+Tipo de decisão
 
-3.5 Pós-Pregão ✅
+Base para compliance, auditoria e rastreabilidade completa
 
-Status: FUNCIONAL
+📦 Pós-Pregão
 
-Iniciado automaticamente para itens relevantes
+Encerramento da disputa e preparação para etapas posteriores (contratação, execução, etc.).
 
-Domínio isolado
+Estado Atual do Projeto
 
-API integrada
+Estrutura base consolidada
 
-3.6 Timeline (Auditoria Central) ✅⚠️
+Domínios principais implementados
 
-Status: FUNCIONAL ESTRUTURALMENTE CORRETA
+Timeline funcional e integrada aos eventos de negócio
 
-Funcionalidades:
+Regras críticas (markup mínimo, exceções, perfis) aplicadas no domínio correto
 
-Registro de eventos
+API FastAPI estruturada por domínio
 
-Classificação por:
+Status estimado de maturidade:
+≈ 60% concluído
 
-Tipo de evento
+Próximos Passos Planejados
 
-Origem (Usuário / Sistema)
+🔐 Padronização de eventos automáticos de mudança de status
+(toda transição de fase gera evento na Timeline)
 
-Uso já integrado ao domínio de Disputa
+🔄 Orquestração explícita do fluxo entre domínios
 
-Importante:
-A Timeline já não é logging, é auditoria de negócio.
+🧠 Consolidação de regras de negócio como políticas reutilizáveis
 
-4. O QUE ESTÁ PARCIALMENTE IMPLEMENTADO
-4.1 Padronização de Eventos de Status ⚠️
+📊 Endpoints avançados de consulta da Timeline (filtros, ordenação, entidade, origem)
 
-Existe registro manual de eventos
+🔒 Camada de autenticação e autorização
 
-Ainda não existe padrão obrigatório para toda mudança de status
+🧪 Testes automatizados por domínio
 
-Transições ainda dependem do desenvolvedor lembrar de registrar
+Tecnologias Utilizadas
 
-➡️ Próximo passo já definido e alinhado
+Python 3.12+
 
-4.2 Consistência Global de Auditoria ⚠️
+FastAPI
 
-Alguns domínios ainda mudam status sem gerar evento
+Arquitetura modular orientada a domínio
 
-Falta normalização completa das mensagens
+Persistência em memória (fase inicial)
 
-Falta rastreio formal de exceções sistêmicas
+Preparado para futura integração com banco relacional
 
-5. DÉBITOS TÉCNICOS CONSCIENTES (NÃO ERROS)
+Objetivo Estratégico
 
-Esses pontos não são falhas, mas decisões conscientes de fase:
+O SGL Enterprise não é apenas um sistema operacional, mas uma plataforma de decisão, capaz de oferecer:
 
-Banco de dados ainda em memória
+Segurança jurídica e operacional
 
-Ausência de persistência real
+Transparência total do processo
 
-Sem autenticação/autorização real (perfil é enum)
-
-APIs ainda não documentadas via OpenAPI avançado
-
-Sem testes automatizados (ainda)
-
-6. PRÓXIMOS PASSOS (SEQUÊNCIA IDEAL)
-🔹 PASSO 1 — Padronizar eventos automáticos de status (IMEDIATO)
-
-Helper único de transição de status
-
-Toda mudança gera evento automaticamente
-
-Origem claramente definida
-
-🔹 PASSO 2 — Eventos de exceção e violação de regra
-
-Markup abaixo do mínimo
-
-Override manual
-
-Reabertura de fases
-
-Decisão fora do fluxo padrão
-
-🔹 PASSO 3 — Timeline como ferramenta de consulta
-
-Ordenação
-
-Filtros por entidade / tipo / origem
-
-Endpoint de auditoria
-
-🔹 PASSO 4 — Consolidação do ciclo completo
-
-Garantir que nenhum domínio altere estado sem evento
-
-Checklist de cobertura total
-
-🔹 PASSO 5 — Persistência real (PostgreSQL)
-
-Modelagem relacional
-
-Migração do db em memória
-
-Preparação para escala
-
-🔹 PASSO 6 — Testes automatizados de domínio
-
-Testes de regra
-
-Testes de exceção
-
-Testes de fluxo completo
-
-7. AVALIAÇÃO DE MATURIDADE DO PROJETO
-📊 Percentual estimado de conclusão
-Dimensão	Status
-Arquitetura	90%
-Regras de Negócio	85%
-Fluxo Operacional	80%
-Auditoria / Observabilidade	65%
-Infraestrutura	30%
-✅ Percentual geral do projeto:
-≈ 75% concluído
-
-Considerando escopo funcional, qualidade arquitetural e preparação para escala.
-
-8. CONCLUSÃO EXECUTIVA
-
-O SGL Enterprise já se encontra em um patamar superior ao de sistemas CRUD comuns.
-Ele apresenta:
-
-Arquitetura defendível
-
-Domínios bem definidos
-
-Auditoria real de decisões
-
-Base sólida para crescimento corporativo
-
-O que falta não é correção, é sofisticação.
+Base sólida para crescimento, compliance e auditoria
