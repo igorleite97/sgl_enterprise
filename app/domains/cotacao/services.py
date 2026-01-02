@@ -1,62 +1,194 @@
 import uuid
 from fastapi import HTTPException
+
 from app.db.memory import db, now
-from app.domains.cotacao.models import CotacaoCreate, CotacaoOut, StatusCotacaoItem
-from app.core.enums import StatusAnaliseEdital
+from app.core.enums import StatusProcesso
+from app.domains.cotacao.models import CotacaoCreate, Cotacao
+from app.domains.timeline.services import registrar_evento
+from app.domains.timeline.enums import TipoEventoTimeline, OrigemEvento
 
 
-def _obter_ultima_analise(oportunidade_id: str):
-    analises = [
-        a for a in db["analises_edital"]
-        if a["oportunidade_id"] == oportunidade_id
-    ]
-    return analises[-1] if analises else None
+# ======================================================
+# HELPERS DE STATUS DO PROCESSO (AUDITÁVEL)
+# ======================================================
+def alterar_status_processo(
+    processo: dict,
+    novo_status: StatusProcesso,
+    usuario: str,
+    origem: OrigemEvento,
+    justificativa: str | None = None,
+) -> None:
+
+    status_anterior = processo["status"]
+
+    if status_anterior == novo_status:
+        raise ValueError("O processo já está neste status.")
+
+    processo["status"] = novo_status
+    processo["atualizada_em"] = now()
+
+    descricao = (
+        f"Status do processo alterado de {status_anterior.value} "
+        f"para {novo_status.value}."
+    )
+
+    if justificativa:
+        descricao += f" Justificativa: {justificativa}"
+
+    registrar_evento(
+        entidade="PROCESSO",
+        entidade_id=processo["id"],
+        tipo_evento=TipoEventoTimeline.STATUS,
+        descricao=descricao,
+        origem=origem,
+        usuario=usuario,
+    )
 
 
-def criar_cotacao(data: CotacaoCreate) -> CotacaoOut:
-    # 1. Validar existência da análise de edital
-    analise = _obter_ultima_analise(data.oportunidade_id)
+# ======================================================
+# CRIAÇÃO DE COTAÇÃO
+# ======================================================
+def criar_cotacao(
+    data: CotacaoCreate,
+    usuario: str,
+    origem: OrigemEvento,
+) -> Cotacao:
 
-    if not analise:
+    oportunidade = next(
+        (o for o in db["oportunidades"] if o["id"] == data.oportunidade_id),
+        None
+    )
+
+    if not oportunidade:
+        raise HTTPException(status_code=404, detail="Oportunidade não encontrada")
+
+    if oportunidade["status"] != StatusProcesso.ANALISE_EDITAL:
         raise HTTPException(
             status_code=400,
-            detail="Cotação bloqueada: oportunidade sem análise de edital."
+            detail="Cotação só pode ser criada após análise de edital aprovada."
         )
 
-    # 2. Validar status da análise
-    if analise["status"] != StatusAnaliseEdital.APROVADA:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Cotação bloqueada: análise de edital está '{analise['status']}'."
-        )
-
-    # 3. Validar desistência do item
-    if data.status == StatusCotacaoItem.DESISTIDO and not data.justificativa_desistencia:
-        raise HTTPException(
-            status_code=400,
-            detail="Desistência exige justificativa formal."
-        )
-
-    # 4. Criar cotação
-    cotacao = {
-        "id": str(uuid.uuid4())[:8],
-        **data.model_dump(),
-        "criado_em": now(),
-    }
+    cotacao = Cotacao(
+        id=str(uuid.uuid4())[:8],
+        oportunidade_id=data.oportunidade_id,
+        fornecedor=data.fornecedor,
+        valor_total=data.valor_total,
+        prazo_entrega_dias=data.prazo_entrega_dias,
+        observacoes=data.observacoes,
+        status=StatusProcesso.COTACAO_INICIADA,
+        criado_em=now(),
+    )
 
     db["cotacoes"].append(cotacao)
-    return CotacaoOut(**cotacao)
+
+    registrar_evento(
+        entidade="COTACAO",
+        entidade_id=cotacao.id,
+        tipo_evento=TipoEventoTimeline.CRIACAO,
+        descricao="Cotação criada.",
+        origem=origem,
+        usuario=usuario,
+    )
+
+    alterar_status_processo(
+        processo=oportunidade,
+        novo_status=StatusProcesso.COTACAO,
+        usuario=usuario,
+        origem=origem,
+        justificativa="Cotação iniciada.",
+    )
+
+    return cotacao
 
 
-def listar_por_oportunidade(oportunidade_id: str):
+# ======================================================
+# CONSULTAS
+# ======================================================
+def obter_cotacao(cotacao_id: str) -> Cotacao:
+    cotacao = next(
+        (c for c in db["cotacoes"] if c.id == cotacao_id),
+        None
+    )
+
+    if not cotacao:
+        raise HTTPException(status_code=404, detail="Cotação não encontrada")
+
+    return cotacao
+
+
+def listar_por_oportunidade(oportunidade_id: str) -> list[Cotacao]:
     return [
         c for c in db["cotacoes"]
-        if c["oportunidade_id"] == oportunidade_id
+        if c.oportunidade_id == oportunidade_id
     ]
 
 
-def listar_por_item(item_id: str):
-    return [
-        c for c in db["cotacoes"]
-        if c["item_id"] == item_id
-    ]
+# ======================================================
+# STATUS DA COTAÇÃO
+# ======================================================
+def alterar_status_cotacao(
+    cotacao: Cotacao,
+    novo_status: StatusProcesso,
+    usuario: str,
+    origem: OrigemEvento,
+    justificativa: str | None = None,
+) -> None:
+
+    status_anterior = cotacao.status
+
+    if status_anterior == novo_status:
+        raise ValueError("A cotação já está neste status.")
+
+    cotacao.status = novo_status
+    cotacao.atualizada_em = now()
+
+    descricao = (
+        f"Status da cotação alterado de {status_anterior.value} "
+        f"para {novo_status.value}."
+    )
+
+    if justificativa:
+        descricao += f" Justificativa: {justificativa}"
+
+    registrar_evento(
+        entidade="COTACAO",
+        entidade_id=cotacao.id,
+        tipo_evento=TipoEventoTimeline.STATUS,
+        descricao=descricao,
+        origem=origem,
+        usuario=usuario,
+    )
+
+
+def encerrar_cotacao(
+    cotacao: Cotacao,
+    usuario: str,
+    origem: OrigemEvento,
+) -> None:
+
+    if cotacao.status != StatusProcesso.COTACAO:
+        raise ValueError("A cotação só pode ser encerrada se estiver ativa.")
+
+    alterar_status_cotacao(
+        cotacao,
+        StatusProcesso.COTACAO_ENCERRADA,
+        usuario,
+        origem,
+        "Cotação finalizada com sucesso.",
+    )
+
+    oportunidade = next(
+        (o for o in db["oportunidades"] if o["id"] == cotacao.oportunidade_id),
+        None
+    )
+
+    if not oportunidade:
+        raise ValueError("Oportunidade não encontrada para encerramento da cotação.")
+
+    alterar_status_processo(
+        oportunidade,
+        StatusProcesso.DISPUTA,
+        usuario,
+        origem,
+        "Processo avançou para fase de disputa.",
+    )

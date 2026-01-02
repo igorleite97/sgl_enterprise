@@ -1,17 +1,56 @@
 import uuid
-from datetime import datetime
 from fastapi import HTTPException
 
-from app.db.memory import db
+from app.db.memory import db, now
 from app.core.enums import StatusProcesso
 from app.domains.analise_edital.models import (
     AnaliseEditalCreate,
     AnaliseEdital
 )
+from app.domains.timeline.services import registrar_evento
+from app.domains.timeline.enums import TipoEventoTimeline, OrigemEvento
 
 
-def criar_analise_edital(data: AnaliseEditalCreate) -> AnaliseEdital:
-    # Verifica se a oportunidade existe
+def alterar_status_processo(
+    processo: dict,
+    novo_status: StatusProcesso,
+    usuario: str,
+    origem: OrigemEvento,
+    justificativa: str | None = None,
+) -> None:
+
+    status_anterior = processo["status"]
+
+    if status_anterior == novo_status:
+        raise ValueError("O processo já está neste status.")
+
+    processo["status"] = novo_status
+    processo["atualizada_em"] = now()
+
+    descricao = (
+        f"Status do processo alterado de {status_anterior.value} "
+        f"para {novo_status.value}."
+    )
+
+    if justificativa:
+        descricao += f" Justificativa: {justificativa}"
+
+    registrar_evento(
+        entidade="PROCESSO",
+        entidade_id=processo["id"],
+        tipo_evento=TipoEventoTimeline.STATUS,
+        descricao=descricao,
+        origem=origem,
+        usuario=usuario,
+    )
+
+
+def criar_analise_edital(
+    data: AnaliseEditalCreate,
+    usuario: str,
+    origem: OrigemEvento,
+) -> AnaliseEdital:
+
     oportunidade = next(
         (o for o in db["oportunidades"] if o["id"] == data.oportunidade_id),
         None
@@ -20,7 +59,6 @@ def criar_analise_edital(data: AnaliseEditalCreate) -> AnaliseEdital:
     if not oportunidade:
         raise HTTPException(status_code=404, detail="Oportunidade não encontrada")
 
-    # Regra obrigatória de desistência
     if data.decisao == "DESISTIR" and not data.motivo_desistencia:
         raise HTTPException(
             status_code=400,
@@ -38,33 +76,107 @@ def criar_analise_edital(data: AnaliseEditalCreate) -> AnaliseEdital:
         observacoes=data.observacoes,
         decisao=data.decisao,
         motivo_desistencia=data.motivo_desistencia,
-        criado_em=datetime.utcnow()
+        status=StatusProcesso.ANALISE_INICIADA,
+        criado_em=now(),
     )
 
-    # Salva análise
-    db["analises_edital"].append(analise.model_dump())
+    db["analises_edital"].append(analise)
 
-    # Atualiza status da oportunidade
+    registrar_evento(
+        entidade="ANALISE_EDITAL",
+        entidade_id=analise.id,
+        tipo_evento=TipoEventoTimeline.CRIACAO,
+        descricao="Análise de edital criada.",
+        origem=origem,
+        usuario=usuario,
+    )
+
     if data.decisao == "DESISTIR":
-        oportunidade["status"] = StatusProcesso.DESISTENCIA
+        alterar_status_analise_edital(
+            analise,
+            StatusProcesso.DESISTENCIA,
+            usuario,
+            origem,
+            data.motivo_desistencia,
+        )
+
+        alterar_status_processo(
+            oportunidade,
+            StatusProcesso.DESISTENCIA,
+            usuario,
+            origem,
+            "Desistência na análise de edital.",
+        )
+
     else:
-        oportunidade["status"] = StatusProcesso.ANALISE_EDITAL
+        alterar_status_analise_edital(
+            analise,
+            StatusProcesso.ANALISE_APROVADA,
+            usuario,
+            origem,
+            "Edital aprovado para continuidade.",
+        )
+
+        alterar_status_processo(
+            oportunidade,
+            StatusProcesso.ANALISE_EDITAL,
+            usuario,
+            origem,
+            "Processo aprovado na análise de edital.",
+        )
 
     return analise
 
-
-def obter_analise(analise_id: str):
+def obter_analise(analise_id: str) -> AnaliseEdital:
     analise = next(
-        (a for a in db["analises_edital"] if a["id"] == analise_id),
+        (a for a in db["analises_edital"] if a.id == analise_id),
         None
     )
+
     if not analise:
         raise HTTPException(status_code=404, detail="Análise não encontrada")
+
     return analise
 
 
-def listar_por_oportunidade(oportunidade_id: str):
+def listar_por_oportunidade(oportunidade_id: str) -> list[AnaliseEdital]:
     return [
         a for a in db["analises_edital"]
-        if a["oportunidade_id"] == oportunidade_id
+        if a.oportunidade_id == oportunidade_id
     ]
+
+
+def alterar_status_analise_edital(
+    analise: AnaliseEdital,
+    novo_status: StatusProcesso,
+    usuario: str,
+    origem: OrigemEvento,
+    justificativa: str | None = None,
+) -> None:
+    status_anterior = analise.status
+
+    if status_anterior == novo_status:
+        raise ValueError("A análise de edital já está neste status.")
+
+    analise.status = novo_status
+    analise.atualizada_em = now()
+
+    descricao = (
+        f"Status da análise de edital alterado de {status_anterior.value} "
+        f"para {novo_status.value}."
+    )
+
+    if justificativa:
+        descricao += f" Justificativa: {justificativa}"
+
+    registrar_evento(
+        entidade="ANALISE_EDITAL",
+        entidade_id=analise.id,
+        tipo_evento=TipoEventoTimeline.STATUS,
+        descricao=descricao,
+        origem=origem,
+        usuario=usuario,
+    )
+
+
+

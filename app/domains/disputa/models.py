@@ -13,6 +13,7 @@ class Disputa:
     oportunidade_id: int
     status: StatusDisputa
     criada_em: datetime
+    atualizada_em: datetime | None = None
 
 
 @dataclass

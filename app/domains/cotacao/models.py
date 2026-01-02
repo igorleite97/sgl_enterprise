@@ -1,19 +1,38 @@
 from pydantic import BaseModel
 from typing import Optional
-from app.core.enums import StatusCotacaoItem
+from datetime import datetime
+
+from app.core.enums import StatusProcesso
 
 
+# ==============================
+# INPUT
+# ==============================
 class CotacaoCreate(BaseModel):
     oportunidade_id: str
-    item_id: str
-    fabricante: str
-    produto: str
-    preco_custo: float
-    frete: float
-    status: StatusCotacaoItem
-    justificativa_desistencia: Optional[str] = None
+    fornecedor: str
+    valor_total: float
+    prazo_entrega_dias: int
+    observacoes: Optional[str] = None
 
 
-class CotacaoOut(CotacaoCreate):
+# ==============================
+# DOMÍNIO (uso interno / services)
+# ==============================
+class Cotacao(BaseModel):
     id: str
-    criado_em: str
+    oportunidade_id: str
+    fornecedor: str
+    valor_total: float
+    prazo_entrega_dias: int
+    observacoes: Optional[str] = None
+    status: StatusProcesso
+    criado_em: datetime
+    atualizada_em: Optional[datetime] = None
+
+
+# ==============================
+# OUTPUT (API)
+# ==============================
+class CotacaoRead(Cotacao):
+    pass

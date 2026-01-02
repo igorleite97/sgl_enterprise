@@ -1,28 +1,31 @@
-from fastapi import APIRouter, HTTPException
-from typing import List
-from app.domains.cotacao.models import CotacaoCreate, CotacaoOut
+from fastapi import APIRouter
+from app.domains.cotacao.models import CotacaoCreate, CotacaoRead
 from app.domains.cotacao.services import (
     criar_cotacao,
+    obter_cotacao,
     listar_por_oportunidade,
-    listar_por_item,
 )
+from app.domains.timeline.enums import OrigemEvento
 
-router = APIRouter(prefix="/cotacao", tags=["Cotação"])
-
-
-@router.post("/", response_model=CotacaoOut)
-def criar(data: CotacaoCreate):
-    try:
-        return criar_cotacao(data)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+router = APIRouter(prefix="/cotacoes", tags=["Cotação"])
 
 
-@router.get("/por-oportunidade/{oportunidade_id}", response_model=List[CotacaoOut])
-def listar_oportunidade(oportunidade_id: str):
+@router.post("/", response_model=CotacaoRead)
+def criar(
+    data: CotacaoCreate,
+):
+    return criar_cotacao(
+        data=data,
+        usuario="api_user",
+        origem=OrigemEvento.API,
+    )
+
+
+@router.get("/{cotacao_id}", response_model=CotacaoRead)
+def obter(cotacao_id: str):
+    return obter_cotacao(cotacao_id)
+
+
+@router.get("/oportunidade/{oportunidade_id}", response_model=list[CotacaoRead])
+def listar(oportunidade_id: str):
     return listar_por_oportunidade(oportunidade_id)
-
-
-@router.get("/por-item/{item_id}", response_model=List[CotacaoOut])
-def listar_item(item_id: str):
-    return listar_por_item(item_id)
