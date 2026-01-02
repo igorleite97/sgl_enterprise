@@ -2,8 +2,11 @@ from enum import Enum
 
 
 class TipoResultadoInicial(str, Enum):
-    GANHO = "GANHO"
-    PERDIDO_MONITORAVEL = "PERDIDO_MONITORAVEL"
+    VENCEDOR = "VENCEDOR"
+    EMPATE = "EMPATE"
+    FRACASSADO = "FRACASSADO"
+    DESERTO = "DESERTO"
+    EM_CONFERENCIA = "EM_CONFERENCIA"
 
 
 class StatusPosPregao(str, Enum):

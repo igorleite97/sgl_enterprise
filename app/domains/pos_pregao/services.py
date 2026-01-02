@@ -1,61 +1,63 @@
+import uuid
 from app.db.memory import db, now
-from app.domains.pos_pregao.models import PosPregaoItem
-from app.domains.pos_pregao.enums import (
-    TipoResultadoInicial,
-    StatusPosPregao,
-)
-from app.domains.disputa.enums import ResultadoDisputaItem
 
 
-def iniciar_pos_pregao(disputa_item) -> PosPregaoItem:
-    """
-    Cria automaticamente o Pós-Pregão conforme resultado da disputa.
-    """
-
-    if disputa_item.posicao_final > 10:
-        raise ValueError(
-            "Itens acima da 10ª posição não entram em pós-pregão."
-        )
-
-    if disputa_item.resultado_final == ResultadoDisputaItem.GANHO:
-        tipo = TipoResultadoInicial.GANHO
-        status_inicial = StatusPosPregao.ARREMATANTE
-
-    else:
-        tipo = TipoResultadoInicial.PERDIDO_MONITORAVEL
-        status_inicial = StatusPosPregao.PERDIDO_MONITORAVEL
-
-    pos = PosPregaoItem(
-        id=len(db["pos_pregao_itens"]) + 1,
-        disputa_item_id=disputa_item.id,
-        tipo_resultado_inicial=tipo,
-        status_atual=status_inicial,
-        iniciado_em=now(),
-        atualizado_em=now(),
-        encerrado=False,
+def iniciar_pos_pregao(oportunidade_id: str):
+    oportunidade = next(
+        (o for o in db["oportunidades"] if o["id"] == oportunidade_id),
+        None
     )
 
-    db["pos_pregao_itens"].append(pos)
-    return pos
+    if not oportunidade:
+        raise ValueError("Oportunidade não encontrada.")
+
+    pos_pregao = {
+        "id": str(uuid.uuid4())[:8],
+        "oportunidade_id": oportunidade_id,
+        "status": "EM_CONFERENCIA",
+        "criado_em": now(),
+        "atualizado_em": now(),
+    }
+
+    db["pos_pregao"].append(pos_pregao)
+
+    # Consolidação item a item
+    for item in db["disputa_itens"]:
+        if item["oportunidade_id"] != oportunidade_id:
+            continue
+
+        lance_vencedor = next(
+            (
+                l for l in db["lances"]
+                if l["disputa_item_id"] == item["id"]
+                and l.get("vencedor") is True
+            ),
+            None
+        )
+
+        if not lance_vencedor:
+            continue
+
+        pos_item = {
+            "id": str(uuid.uuid4())[:8],
+            "pos_pregao_id": pos_pregao["id"],
+            "disputa_item_id": item["id"],
+
+            "tipo_resultado_inicial": "VENCEDOR",
+            "status_atual": "ARREMATANTE",
+            "encerrado": False,
+
+            "quantidade_arrematada": lance_vencedor["quantidade"],
+            "valor_unitario_arrematado": lance_vencedor["preco_unitario"],
+            "valor_total_arrematado": (
+                lance_vencedor["quantidade"] * lance_vencedor["preco_unitario"]
+    ),
+
+        "criado_em": now(),
+        "atualizado_em": now(),
+}
 
 
-def avancar_status(pos: PosPregaoItem, novo_status: StatusPosPregao):
-    """
-    Avança manualmente o status do pós-pregão.
-    """
+        db["pos_pregao_itens"].append(pos_item)
 
-    if pos.encerrado:
-        raise ValueError("Pós-pregão já encerrado.")
-
-    pos.status_atual = novo_status
-    pos.atualizado_em = now()
-
-
-def encerrar_pos_pregao(pos: PosPregaoItem):
-    """
-    Encerra definitivamente o acompanhamento.
-    """
-
-    pos.status_atual = StatusPosPregao.ENCERRADO
-    pos.encerrado = True
-    pos.atualizado_em = now()
+    return pos_pregao
