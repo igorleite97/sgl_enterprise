@@ -17,4 +17,9 @@ db = {
     "pos_pregao_itens": [],
 
     "timeline": [],
+    
+    "contratos": [],
+    "contrato_itens": [],
+    "empenhos": [],
+    "empenho_itens": [],
 }

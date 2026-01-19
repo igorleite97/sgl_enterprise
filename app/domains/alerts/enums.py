@@ -1,0 +1,15 @@
+from enum import Enum
+
+
+class TipoAlerta(str, Enum):
+    PRAZO_ENTREGA = "PRAZO_ENTREGA"
+    SALDO_BAIXO = "SALDO_BAIXO"
+    CONTRATO_VENCENDO = "CONTRATO_VENCENDO"
+    EMPENHO_SEM_ENTREGA = "EMPENHO_SEM_ENTREGA"
+    PROCESSO_PARADO = "PROCESSO_PARADO"
+
+
+class StatusAlerta(str, Enum):
+    ATIVO = "ATIVO"
+    RESOLVIDO = "RESOLVIDO"
+    IGNORADO = "IGNORADO"

@@ -2,13 +2,14 @@ from enum import Enum
 
 
 class TipoEventoTimeline(str, Enum):
-    CRIACAO = "CRIACAO"
-    ATUALIZACAO = "ATUALIZACAO"
-    DECISAO = "DECISAO"
-    STATUS = "STATUS"
-    AUDITORIA = "AUDITORIA"
+    CRIACAO = "criacao"
+    STATUS = "status"
+    OBSERVACAO = "observacao"
+    DECISAO = "decisao"
 
 
-class OrigemEvento(str, Enum):
-    SISTEMA = "SISTEMA"
-    USUARIO = "USUARIO"
+class SeveridadeEvento(str, Enum):
+    BAIXA = "baixa"
+    MEDIA = "media"
+    ALTA = "alta"
+    CRITICA = "critica"

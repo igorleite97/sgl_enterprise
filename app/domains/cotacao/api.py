@@ -1,23 +1,26 @@
 from fastapi import APIRouter
+
 from app.domains.cotacao.models import CotacaoCreate, CotacaoRead
 from app.domains.cotacao.services import (
     criar_cotacao,
     obter_cotacao,
     listar_por_oportunidade,
 )
-from app.domains.timeline.enums import OrigemEvento
 
-router = APIRouter(prefix="/cotacoes", tags=["Cotação"])
+router = APIRouter(
+    prefix="/cotacoes",
+    tags=["Cotação"],
+)
 
 
 @router.post("/", response_model=CotacaoRead)
 def criar(
     data: CotacaoCreate,
+    usuario: str = "api_user",
 ):
     return criar_cotacao(
         data=data,
-        usuario="api_user",
-        origem=OrigemEvento.API,
+        usuario=usuario,
     )
 
 

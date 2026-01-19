@@ -4,8 +4,8 @@ from fastapi import HTTPException
 from app.db.memory import db, now
 from app.core.enums import StatusProcesso
 from app.domains.cotacao.models import CotacaoCreate, Cotacao
-from app.domains.timeline.services import registrar_evento
-from app.domains.timeline.enums import TipoEventoTimeline, OrigemEvento
+from app.domains.timeline.services import registrar_evento_timeline
+from app.domains.timeline.enums import TipoEventoTimeline, SeveridadeEvento
 
 
 # ======================================================
@@ -15,7 +15,6 @@ def alterar_status_processo(
     processo: dict,
     novo_status: StatusProcesso,
     usuario: str,
-    origem: OrigemEvento,
     justificativa: str | None = None,
 ) -> None:
 
@@ -35,12 +34,12 @@ def alterar_status_processo(
     if justificativa:
         descricao += f" Justificativa: {justificativa}"
 
-    registrar_evento(
+    registrar_evento_timeline(
         entidade="PROCESSO",
         entidade_id=processo["id"],
         tipo_evento=TipoEventoTimeline.STATUS,
         descricao=descricao,
-        origem=origem,
+        severidade=SeveridadeEvento.INFO,
         usuario=usuario,
     )
 
@@ -51,7 +50,6 @@ def alterar_status_processo(
 def criar_cotacao(
     data: CotacaoCreate,
     usuario: str,
-    origem: OrigemEvento,
 ) -> Cotacao:
 
     oportunidade = next(
@@ -81,12 +79,12 @@ def criar_cotacao(
 
     db["cotacoes"].append(cotacao)
 
-    registrar_evento(
+    registrar_evento_timeline(
         entidade="COTACAO",
         entidade_id=cotacao.id,
         tipo_evento=TipoEventoTimeline.CRIACAO,
         descricao="Cotação criada.",
-        origem=origem,
+        severidade=SeveridadeEvento.INFO,
         usuario=usuario,
     )
 
@@ -94,7 +92,6 @@ def criar_cotacao(
         processo=oportunidade,
         novo_status=StatusProcesso.COTACAO,
         usuario=usuario,
-        origem=origem,
         justificativa="Cotação iniciada.",
     )
 
@@ -130,7 +127,6 @@ def alterar_status_cotacao(
     cotacao: Cotacao,
     novo_status: StatusProcesso,
     usuario: str,
-    origem: OrigemEvento,
     justificativa: str | None = None,
 ) -> None:
 
@@ -150,12 +146,12 @@ def alterar_status_cotacao(
     if justificativa:
         descricao += f" Justificativa: {justificativa}"
 
-    registrar_evento(
+    registrar_evento_timeline(
         entidade="COTACAO",
         entidade_id=cotacao.id,
         tipo_evento=TipoEventoTimeline.STATUS,
         descricao=descricao,
-        origem=origem,
+        severidade=SeveridadeEvento.INFO,
         usuario=usuario,
     )
 
@@ -163,7 +159,6 @@ def alterar_status_cotacao(
 def encerrar_cotacao(
     cotacao: Cotacao,
     usuario: str,
-    origem: OrigemEvento,
 ) -> None:
 
     if cotacao.status != StatusProcesso.COTACAO:
@@ -173,7 +168,6 @@ def encerrar_cotacao(
         cotacao,
         StatusProcesso.COTACAO_ENCERRADA,
         usuario,
-        origem,
         "Cotação finalizada com sucesso.",
     )
 
@@ -189,6 +183,5 @@ def encerrar_cotacao(
         oportunidade,
         StatusProcesso.DISPUTA,
         usuario,
-        origem,
         "Processo avançou para fase de disputa.",
     )

@@ -3,7 +3,7 @@ from typing import Optional, List
 
 from app.db.memory import db
 from app.domains.timeline.models import EventoTimeline
-from app.domains.timeline.enums import TipoEventoTimeline, OrigemEvento
+from app.domains.timeline.enums import TipoEventoTimeline, SeveridadeEvento
 
 router = APIRouter(
     prefix="/timeline",
@@ -16,8 +16,8 @@ def listar_timeline(
     entidade: Optional[str] = Query(None),
     entidade_id: Optional[int] = Query(None),
     tipo_evento: Optional[TipoEventoTimeline] = Query(None),
-    origem: Optional[OrigemEvento] = Query(None),
-    order: str = Query("desc", regex="^(asc|desc)$"),
+    severidade: Optional[SeveridadeEvento] = Query(None),
+    order: str = Query("desc", pattern="^(asc|desc)$"),
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ):
@@ -25,16 +25,17 @@ def listar_timeline(
 
     # 🔍 Filtros
     if entidade:
-        eventos = [e for e in eventos if e.entidade == entidade]
+        eventos = [e for e in eventos if e.entidade_tipo == entidade]
 
     if entidade_id:
         eventos = [e for e in eventos if e.entidade_id == entidade_id]
 
     if tipo_evento:
-        eventos = [e for e in eventos if e.tipo_evento == tipo_evento]
+        eventos = [e for e in eventos if e.tipo == tipo_evento]
 
-    if origem:
-        eventos = [e for e in eventos if e.origem == origem]
+    if severidade:
+        eventos = [e for e in eventos if e.severidade == severidade]
+
 
     # ↕ Ordenação
     eventos = sorted(
@@ -45,3 +46,4 @@ def listar_timeline(
 
     # 📄 Paginação
     return eventos[offset : offset + limit]
+

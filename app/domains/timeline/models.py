@@ -1,17 +1,19 @@
 from dataclasses import dataclass
 from datetime import datetime
-from app.domains.timeline.enums import TipoEventoTimeline, OrigemEvento
-
+from app.domains.timeline.enums import TipoEventoTimeline, SeveridadeEvento
 
 @dataclass
 class EventoTimeline:
     id: int
-    entidade: str            # ex: "DISPUTA_ITEM", "LANCE", "POS_PREGAO"
-    entidade_id: int
-    tipo_evento: TipoEventoTimeline
+
+    tipo: TipoEventoTimeline
+    severidade: SeveridadeEvento
+
+    entidade_id: str
+    entidade_tipo: str
+
+    titulo: str
     descricao: str
 
-    origem: OrigemEvento
-    usuario: str | None      # nome ou id do usuário
-
+    usuario: str | None
     criado_em: datetime

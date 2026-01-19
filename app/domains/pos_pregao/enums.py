@@ -6,12 +6,10 @@ class TipoResultadoInicial(str, Enum):
     EMPATE = "EMPATE"
     FRACASSADO = "FRACASSADO"
     DESERTO = "DESERTO"
-    EM_CONFERENCIA = "EM_CONFERENCIA"
-
 
 class StatusPosPregao(str, Enum):
-    # Comum
-    ENCERRADO = "ENCERRADO"
+    # Estado inicial após disputa
+    EM_CONFERENCIA = "EM_CONFERENCIA"
 
     # Fluxo de ganho
     ARREMATANTE = "ARREMATANTE"
@@ -25,3 +23,6 @@ class StatusPosPregao(str, Enum):
     PERDIDO_MONITORAVEL = "PERDIDO_MONITORAVEL"
     AGUARDANDO_QUEDA = "AGUARDANDO_QUEDA"
     CONVOCADO = "CONVOCADO"
+
+    # Final
+    ENCERRADO = "ENCERRADO"

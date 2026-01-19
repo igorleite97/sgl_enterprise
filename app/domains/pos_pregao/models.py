@@ -28,17 +28,15 @@ class PosPregaoItem:
     encerrado: bool = False
 
 class PosPregao(BaseModel):
-    """
-    Representa o Pós-Pregão no nível do PROCESSO.
-    Exposto via API.
-    """
-
     id: str
     oportunidade_id: str
     status: StatusPosPregao
+
+    contrato_id: Optional[str] = None  # 👈 chave do STANDBY / ATIVO
 
     observacao: Optional[str] = None
 
     criado_em: datetime
     atualizado_em: Optional[datetime] = None
+
 

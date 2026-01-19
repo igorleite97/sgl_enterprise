@@ -1,5 +1,7 @@
 import uuid
 from app.db.memory import db, now
+from app.domains.pos_pregao.enums import StatusPosPregao
+from app.domains.contratos.services import criar_contrato_standby
 
 
 def iniciar_pos_pregao(oportunidade_id: str):
@@ -11,53 +13,70 @@ def iniciar_pos_pregao(oportunidade_id: str):
     if not oportunidade:
         raise ValueError("Oportunidade não encontrada.")
 
+    # Valida se houve disputa encerrada
+    itens_disputa = [
+        i for i in db["disputa_itens"]
+        if i["oportunidade_id"] == oportunidade_id
+    ]
+
+    if not itens_disputa:
+        raise ValueError("Não existem itens de disputa para esta oportunidade.")
+
+    # Evita duplicidade
+    existente = next(
+        (p for p in db["pos_pregao"] if p["oportunidade_id"] == oportunidade_id),
+        None
+    )
+
+    if existente:
+        return existente
+
     pos_pregao = {
         "id": str(uuid.uuid4())[:8],
         "oportunidade_id": oportunidade_id,
-        "status": "EM_CONFERENCIA",
+
+        # Status correto para início do pós-pregão
+        "status": StatusPosPregao.ARREMATANTE,
+
         "criado_em": now(),
         "atualizado_em": now(),
     }
 
     db["pos_pregao"].append(pos_pregao)
+    return pos_pregao
 
-    # Consolidação item a item
-    for item in db["disputa_itens"]:
-        if item["oportunidade_id"] != oportunidade_id:
-            continue
+def confirmar_homologacao(
+    oportunidade_id: str,
+    usuario: str = "sistema"
+):
+    # Localiza o pós-pregão
+    pos_pregao = next(
+        (p for p in db["pos_pregao"] if p["oportunidade_id"] == oportunidade_id),
+        None
+    )
 
-        lance_vencedor = next(
-            (
-                l for l in db["lances"]
-                if l["disputa_item_id"] == item["id"]
-                and l.get("vencedor") is True
-            ),
-            None
+    if not pos_pregao:
+        raise ValueError("Pós-pregão não encontrado.")
+
+    # Validação de estado
+    if pos_pregao["status"] != StatusPosPregao.ARREMATANTE:
+        raise ValueError(
+            f"Homologação só pode ocorrer se status for ARREMATANTE. "
+            f"Status atual: {pos_pregao['status']}"
         )
 
-        if not lance_vencedor:
-            continue
+    # Atualiza status do pós-pregão
+    pos_pregao["status"] = StatusPosPregao.HABILITADO
+    pos_pregao["atualizado_em"] = now()
 
-        pos_item = {
-            "id": str(uuid.uuid4())[:8],
-            "pos_pregao_id": pos_pregao["id"],
-            "disputa_item_id": item["id"],
+    # 🔥 GATILHO AUTOMÁTICO → CONTRATO STANDBY
+    contrato = criar_contrato_standby(
+        oportunidade_id=oportunidade_id,
+        pos_pregao_id=pos_pregao["id"],
+        usuario=usuario,
+    )
 
-            "tipo_resultado_inicial": "VENCEDOR",
-            "status_atual": "ARREMATANTE",
-            "encerrado": False,
-
-            "quantidade_arrematada": lance_vencedor["quantidade"],
-            "valor_unitario_arrematado": lance_vencedor["preco_unitario"],
-            "valor_total_arrematado": (
-                lance_vencedor["quantidade"] * lance_vencedor["preco_unitario"]
-    ),
-
-        "criado_em": now(),
-        "atualizado_em": now(),
-}
-
-
-        db["pos_pregao_itens"].append(pos_item)
-
-    return pos_pregao
+    return {
+        "pos_pregao": pos_pregao,
+        "contrato": contrato,
+    }

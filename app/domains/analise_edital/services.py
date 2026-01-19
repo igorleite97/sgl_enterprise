@@ -5,17 +5,19 @@ from app.db.memory import db, now
 from app.core.enums import StatusProcesso
 from app.domains.analise_edital.models import (
     AnaliseEditalCreate,
-    AnaliseEdital
+    AnaliseEdital,
 )
-from app.domains.timeline.services import registrar_evento
-from app.domains.timeline.enums import TipoEventoTimeline, OrigemEvento
+from app.domains.timeline.services import registrar_evento_timeline
+from app.domains.timeline.enums import TipoEventoTimeline, SeveridadeEvento
 
 
+# =========================================================
+# 🔁 ALTERAÇÃO DE STATUS DO PROCESSO (OPORTUNIDADE)
+# =========================================================
 def alterar_status_processo(
     processo: dict,
     novo_status: StatusProcesso,
     usuario: str,
-    origem: OrigemEvento,
     justificativa: str | None = None,
 ) -> None:
 
@@ -35,25 +37,27 @@ def alterar_status_processo(
     if justificativa:
         descricao += f" Justificativa: {justificativa}"
 
-    registrar_evento(
+    registrar_evento_timeline(
         entidade="PROCESSO",
         entidade_id=processo["id"],
         tipo_evento=TipoEventoTimeline.STATUS,
         descricao=descricao,
-        origem=origem,
+        severidade=SeveridadeEvento.INFO,
         usuario=usuario,
     )
 
 
+# =========================================================
+# 🧾 CRIAÇÃO DA ANÁLISE DE EDITAL
+# =========================================================
 def criar_analise_edital(
     data: AnaliseEditalCreate,
     usuario: str,
-    origem: OrigemEvento,
 ) -> AnaliseEdital:
 
     oportunidade = next(
         (o for o in db["oportunidades"] if o["id"] == data.oportunidade_id),
-        None
+        None,
     )
 
     if not oportunidade:
@@ -62,7 +66,7 @@ def criar_analise_edital(
     if data.decisao == "DESISTIR" and not data.motivo_desistencia:
         raise HTTPException(
             status_code=400,
-            detail="Motivo da desistência é obrigatório quando a decisão for DESISTIR"
+            detail="Motivo da desistência é obrigatório quando a decisão for DESISTIR",
         )
 
     analise = AnaliseEdital(
@@ -82,21 +86,24 @@ def criar_analise_edital(
 
     db["analises_edital"].append(analise)
 
-    registrar_evento(
+    # 📌 Evento de criação
+    registrar_evento_timeline(
         entidade="ANALISE_EDITAL",
         entidade_id=analise.id,
         tipo_evento=TipoEventoTimeline.CRIACAO,
         descricao="Análise de edital criada.",
-        origem=origem,
+        severidade=SeveridadeEvento.INFO,
         usuario=usuario,
     )
 
+    # =====================================================
+    # 🔀 DECISÃO DA ANÁLISE
+    # =====================================================
     if data.decisao == "DESISTIR":
         alterar_status_analise_edital(
             analise,
             StatusProcesso.DESISTENCIA,
             usuario,
-            origem,
             data.motivo_desistencia,
         )
 
@@ -104,7 +111,6 @@ def criar_analise_edital(
             oportunidade,
             StatusProcesso.DESISTENCIA,
             usuario,
-            origem,
             "Desistência na análise de edital.",
         )
 
@@ -113,7 +119,6 @@ def criar_analise_edital(
             analise,
             StatusProcesso.ANALISE_APROVADA,
             usuario,
-            origem,
             "Edital aprovado para continuidade.",
         )
 
@@ -121,16 +126,19 @@ def criar_analise_edital(
             oportunidade,
             StatusProcesso.ANALISE_EDITAL,
             usuario,
-            origem,
             "Processo aprovado na análise de edital.",
         )
 
     return analise
 
+
+# =========================================================
+# 🔍 CONSULTAS
+# =========================================================
 def obter_analise(analise_id: str) -> AnaliseEdital:
     analise = next(
         (a for a in db["analises_edital"] if a.id == analise_id),
-        None
+        None,
     )
 
     if not analise:
@@ -146,13 +154,16 @@ def listar_por_oportunidade(oportunidade_id: str) -> list[AnaliseEdital]:
     ]
 
 
+# =========================================================
+# 🔄 ALTERAÇÃO DE STATUS DA ANÁLISE
+# =========================================================
 def alterar_status_analise_edital(
     analise: AnaliseEdital,
     novo_status: StatusProcesso,
     usuario: str,
-    origem: OrigemEvento,
     justificativa: str | None = None,
 ) -> None:
+
     status_anterior = analise.status
 
     if status_anterior == novo_status:
@@ -169,14 +180,11 @@ def alterar_status_analise_edital(
     if justificativa:
         descricao += f" Justificativa: {justificativa}"
 
-    registrar_evento(
+    registrar_evento_timeline(
         entidade="ANALISE_EDITAL",
         entidade_id=analise.id,
         tipo_evento=TipoEventoTimeline.STATUS,
         descricao=descricao,
-        origem=origem,
+        severidade=SeveridadeEvento.INFO,
         usuario=usuario,
     )
-
-
-

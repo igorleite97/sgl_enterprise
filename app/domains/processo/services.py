@@ -1,8 +1,6 @@
-# app/domains/processo/services.py
-
 from app.db.memory import now
-from app.domains.timeline.services import registrar_evento
-from app.domains.timeline.enums import TipoEventoTimeline, OrigemEvento
+from app.domains.timeline.services import registrar_evento_timeline
+from app.domains.timeline.enums import TipoEventoTimeline, SeveridadeEvento
 from app.core.enums import StatusProcesso
 
 
@@ -10,7 +8,6 @@ def alterar_status_processo(
     processo: dict,
     novo_status: StatusProcesso,
     usuario: str,
-    origem: OrigemEvento,
     justificativa: str | None = None,
 ) -> None:
     status_anterior = processo["status"]
@@ -29,11 +26,11 @@ def alterar_status_processo(
     if justificativa:
         descricao += f" Justificativa: {justificativa}"
 
-    registrar_evento(
+    registrar_evento_timeline(
         entidade="PROCESSO",
         entidade_id=processo["id"],
         tipo_evento=TipoEventoTimeline.STATUS,
         descricao=descricao,
-        origem=origem,
+        severidade=SeveridadeEvento.INFO,
         usuario=usuario,
     )

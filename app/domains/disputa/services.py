@@ -3,19 +3,18 @@ from fastapi import HTTPException
 
 from app.db.memory import db, now
 from app.core.enums import StatusProcesso, StatusDisputaItem
-from app.domains.timeline.services import registrar_evento
-from app.domains.timeline.enums import TipoEventoTimeline, OrigemEvento
+from app.domains.timeline.services import registrar_evento_timeline
+from app.domains.timeline.enums import TipoEventoTimeline, SeveridadeEvento
 
 
 # =========================
 # PROCESSO → DISPUTA
 # =========================
-
 def iniciar_disputa(
     oportunidade_id: str,
     usuario: str = "sistema",
-    origem: OrigemEvento = OrigemEvento.SISTEMA,
 ):
+
     oportunidade = next(
         (o for o in db["oportunidades"] if o["id"] == oportunidade_id),
         None
@@ -38,17 +37,17 @@ def iniciar_disputa(
             "status": StatusDisputaItem.CRIADO,
             "criado_em": now(),
         }
-        db["disputa_itens"].append(disputa_item)
+        db.setdefault("disputa_itens", []).append(disputa_item)
 
     oportunidade["status"] = StatusProcesso.DISPUTA
     oportunidade["atualizada_em"] = now()
 
-    registrar_evento(
+    registrar_evento_timeline(
         entidade="PROCESSO",
         entidade_id=oportunidade_id,
         tipo_evento=TipoEventoTimeline.STATUS,
         descricao="Disputa iniciada para os itens.",
-        origem=origem,
+        severidade=SeveridadeEvento.INFO,
         usuario=usuario,
     )
 
@@ -58,13 +57,12 @@ def iniciar_disputa(
 # =========================
 # ITEM DE DISPUTA
 # =========================
-
 def encerrar_disputa_item(
     disputa_item_id: str,
     posicao_final: int,
     usuario: str = "sistema",
-    origem: OrigemEvento = OrigemEvento.SISTEMA,
 ):
+
     item = next(
         (i for i in db["disputa_itens"] if i["id"] == disputa_item_id),
         None
@@ -77,12 +75,12 @@ def encerrar_disputa_item(
     item["posicao_final"] = posicao_final
     item["atualizada_em"] = now()
 
-    registrar_evento(
-        entidade="DISPUTA",
+    registrar_evento_timeline(
+        entidade="DISPUTA_ITEM",
         entidade_id=item["id"],
         tipo_evento=TipoEventoTimeline.DECISAO,
         descricao=f"Item encerrado com posição final {posicao_final}.",
-        origem=origem,
+        severidade=SeveridadeEvento.INFO,
         usuario=usuario,
     )
 
@@ -97,8 +95,8 @@ def registrar_lance(
     posicao: int,
     vencedor: bool = False,
     usuario: str = "sistema",
-    origem: OrigemEvento = OrigemEvento.SISTEMA,
 ):
+
     item = next(
         (i for i in db["disputa_itens"] if i["id"] == disputa_item_id),
         None
@@ -126,8 +124,8 @@ def registrar_lance(
 
     db.setdefault("lances", []).append(lance)
 
-    registrar_evento(
-        entidade="DISPUTA",
+    registrar_evento_timeline(
+        entidade="DISPUTA_ITEM",
         entidade_id=disputa_item_id,
         tipo_evento=TipoEventoTimeline.OBSERVACAO,
         descricao=(
@@ -137,7 +135,7 @@ def registrar_lance(
             f"Markup: {markup_real} | "
             f"Posição: {posicao}"
         ),
-        origem=origem,
+        severidade=SeveridadeEvento.INFO,
         usuario=usuario,
     )
 
@@ -146,11 +144,15 @@ def registrar_lance(
 
     return lance
 
+
+# =========================
+# CONSOLIDAÇÃO DA DISPUTA
+# =========================
 def consolidar_disputa(
     oportunidade_id: str,
     usuario: str = "sistema",
-    origem: OrigemEvento = OrigemEvento.SISTEMA,
 ):
+
     oportunidade = next(
         (o for o in db["oportunidades"] if o["id"] == oportunidade_id),
         None
@@ -184,12 +186,12 @@ def consolidar_disputa(
     oportunidade["status"] = StatusProcesso.POS_PREGAO
     oportunidade["atualizada_em"] = now()
 
-    registrar_evento(
+    registrar_evento_timeline(
         entidade="PROCESSO",
         entidade_id=oportunidade_id,
         tipo_evento=TipoEventoTimeline.STATUS,
         descricao="Todos os itens encerrados. Processo avançou para Pós-Pregão.",
-        origem=origem,
+        severidade=SeveridadeEvento.INFO,
         usuario=usuario,
     )
 

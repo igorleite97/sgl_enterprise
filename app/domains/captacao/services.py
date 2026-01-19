@@ -1,17 +1,15 @@
-# app/domains/captacao/services.py
-
 import uuid
+
 from app.db.memory import db, now
 from app.core.enums import StatusProcesso
 from app.domains.captacao.models import CaptacaoInput, ProcessoCaptado
-from app.domains.timeline.services import registrar_evento
-from app.domains.timeline.enums import TipoEventoTimeline, OrigemEvento
+from app.domains.timeline.services import registrar_evento_timeline
+from app.domains.timeline.enums import TipoEventoTimeline, SeveridadeEvento
 
 
 def registrar_captacao(
     data: CaptacaoInput,
     usuario: str,
-    origem: OrigemEvento,
 ) -> ProcessoCaptado:
     """
     Registra uma nova captação e cria o primeiro evento de auditoria.
@@ -32,12 +30,12 @@ def registrar_captacao(
     db["oportunidades"].append(processo)
 
     # 📌 Evento inicial de auditoria
-    registrar_evento(
+    registrar_evento_timeline(
         entidade="CAPTACAO",
         entidade_id=processo.id,
         tipo_evento=TipoEventoTimeline.CRIACAO,
         descricao="Captação registrada no sistema.",
-        origem=origem,
+        severidade=SeveridadeEvento.INFO,
         usuario=usuario,
     )
 
@@ -48,7 +46,6 @@ def alterar_status_captacao(
     captacao: ProcessoCaptado,
     novo_status: StatusProcesso,
     usuario: str,
-    origem: OrigemEvento,
     justificativa: str | None = None,
 ) -> None:
     """
@@ -71,11 +68,11 @@ def alterar_status_captacao(
     if justificativa:
         descricao += f" Justificativa: {justificativa}"
 
-    registrar_evento(
+    registrar_evento_timeline(
         entidade="CAPTACAO",
         entidade_id=captacao.id,
         tipo_evento=TipoEventoTimeline.STATUS,
         descricao=descricao,
-        origem=origem,
+        severidade=SeveridadeEvento.INFO,
         usuario=usuario,
     )
