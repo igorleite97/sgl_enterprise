@@ -24,10 +24,20 @@ def criar_contrato_standby(
 
     db["contratos"].append(contrato)
 
+    registrar_evento_timeline(
+    entity_type="CONTRATO",
+    entity_id=contrato["id"],
+    tipo_evento=TipoEventoTimeline.CONTRATO_CRIADO,
+    payload={
+        "oportunidade_id": oportunidade_id,
+        "pos_pregao_id": pos_pregao_id,
+        "status": StatusContrato.STANDBY,
+    },
+    usuario=usuario,
+)
     # Itens ainda NÃO nascem aqui (saldo bloqueado)
     return contrato
     
-
 def receber_contrato_ou_ata(
     contrato_id: str,
     numero_documento: str,
@@ -98,6 +108,20 @@ def receber_contrato_ou_ata(
         "atualizado_em": now(),
         "ativado_por": usuario,
     })
+
+    registrar_evento_timeline(
+    entity_type="CONTRATO",
+    entity_id=contrato["id"],
+    tipo_evento=TipoEventoTimeline.CONTRATO_ATIVADO,
+    payload={
+        "numero_documento": numero_documento,
+        "data_inicio": data_inicio,
+        "data_fim": data_fim,
+        "valor_total": valor_total,
+        "itens_vinculados": len(contrato_itens),
+    },
+    usuario=usuario,
+)
 
     db["contrato_itens"].extend(contrato_itens)
 
@@ -186,6 +210,18 @@ def registrar_empenho(
         "criado_em": now(),
     })
 
+    registrar_evento_timeline(
+    entity_type="CONTRATO",
+    entity_id=contrato_id,
+    tipo_evento=TipoEventoTimeline.EMPENHO_REGISTRADO,
+    payload={
+        "empenho_id": empenho_id,
+        "numero_empenho": numero_empenho,
+        "valor_total": valor_total,
+    },
+    usuario=usuario,
+)
+
     # 🔚 Encerramento automático
     if all(
         ci["quantidade_empenhada"] >= ci["quantidade_total"]
@@ -199,6 +235,18 @@ def registrar_empenho(
 
         contrato["status"] = StatusContrato.ENCERRADO
         contrato["atualizado_em"] = now()
+        
+        registrar_evento_timeline(
+        entity_type="CONTRATO",
+        entity_id=contrato_id,
+        tipo_evento=TipoEventoTimeline.CONTRATO_ENCERRADO,
+        payload={
+            "motivo": "Encerramento automático por saldo zerado",
+            "valor_total": contrato["valor_total"],
+            "valor_empenhado": contrato["valor_empenhado"],
+        },
+        usuario="sistema",
+    )
 
     return {
         "empenho_id": empenho_id,
@@ -228,6 +276,16 @@ def suspender_contrato(
     contrato["atualizado_em"] = now()
     contrato["suspenso_por"] = usuario
 
+    registrar_evento_timeline(
+    entity_type="CONTRATO",
+    entity_id=contrato_id,
+    tipo_evento=TipoEventoTimeline.CONTRATO_SUSPENSO,
+    payload={
+        "motivo": motivo,
+    },
+    usuario=usuario,
+)
+
     return contrato
 
 def cancelar_contrato(
@@ -252,6 +310,16 @@ def cancelar_contrato(
     contrato["motivo_cancelamento"] = motivo
     contrato["atualizado_em"] = now()
     contrato["cancelado_por"] = usuario
+
+    registrar_evento_timeline(
+    entity_type="CONTRATO",
+    entity_id=contrato_id,
+    tipo_evento=TipoEventoTimeline.CONTRATO_CANCELADO,
+    payload={
+        "motivo": motivo,
+    },
+    usuario=usuario,
+)
 
     return contrato
 

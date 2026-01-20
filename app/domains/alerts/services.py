@@ -3,6 +3,7 @@ from datetime import date
 
 from app.db.memory import db, now
 from app.domains.alerts.enums import TipoAlerta
+from app.domains.alerts.orchestrator import alerta_ja_existe
 from app.domains.alerts.rules import (
     alerta_prazo_entrega,
     alerta_saldo_baixo,
@@ -34,17 +35,20 @@ def gerar_alertas_empenhos(usuario: str = "sistema"):
             db.setdefault("alertas", []).append(alerta)
 
             registrar_evento_timeline(
-                entidade="EMPENHO",
-                entidade_id=empenho["id"],
+                entity_type="EMPENHO",
+                entity_id=empenho["id"],
                 tipo_evento=TipoEventoTimeline.OBSERVACAO,
-                descricao=f"⚠ ALERTA: {mensagem}",
+                payload={
+                    "alerta": mensagem,
+                    "tipo": TipoAlerta.PRAZO_ENTREGA,
+                },
                 severidade=SeveridadeEvento.ALTA,
                 usuario=usuario,
             )
 
 
 def gerar_alertas_contratos(usuario: str = "sistema"):
-     from app.domains.alerts.models import Alerta
+    from app.domains.alerts.models import Alerta
     for contrato in db.get("contratos", []):
         mensagem = alerta_saldo_baixo(
             contrato["valor_a_empenhar"]
@@ -63,10 +67,15 @@ def gerar_alertas_contratos(usuario: str = "sistema"):
             db.setdefault("alertas", []).append(alerta)
 
             registrar_evento_timeline(
-                entidade="CONTRATO",
-                entidade_id=contrato["id"],
-                tipo_evento=TipoEventoTimeline.DECISAO,
-                descricao=f"⚠ ALERTA: {mensagem}",
+                entity_type="CONTRATO",
+                entity_id=contrato["id"],
+                tipo_evento=TipoEventoTimeline.OBSERVACAO,
+                payload={
+                    "alerta": mensagem,
+                    "tipo": TipoAlerta.SALDO_BAIXO,
+                    "valor_a_empenhar": contrato["valor_a_empenhar"],
+                },
                 severidade=SeveridadeEvento.CRITICA,
                 usuario=usuario,
             )
+
