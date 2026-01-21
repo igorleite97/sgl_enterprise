@@ -9,6 +9,7 @@ from app.domains.contratos.api import router as contratos_router
 from app.domains.contratos.empenhos_api import router as empenhos_router
 from app.domains.timeline.api import router as timeline_router
 from app.domains.alerts.api import router as alerts_router
+from app.domains.dashboard.api import router as dashboard_router
 
 
 app = FastAPI(title="SGL Enterprise")
@@ -22,3 +23,5 @@ app.include_router(contratos_router, tags=["Contratos"])
 app.include_router(empenhos_router, tags=["Empenhos"])
 app.include_router(timeline_router, tags=["Timeline"])
 app.include_router(alerts_router, tags=["Alertas"])
+app.include_router(dashboard_router, tags=["Dashboard"])
+
