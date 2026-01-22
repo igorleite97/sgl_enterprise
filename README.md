@@ -9,16 +9,18 @@ Arquitetado para atender às rigorosas demandas da Lei 14.133/21, o projeto foca
    - Mitigação de Risco: Tomada de decisão baseada em dados granulares (nível de item).
    - Auditabilidade Imutável: Registro cronológico de eventos críticos (Timeline).
 
-2. Pilares Arquiteturais🧱 Domain-Driven Design (DDD)A estrutura do sistema é segmentada em Bounded Contexts (Contextos Delimitados), garantindo que cada fase do processo licitatório possua modelos, entidades e regras de negócio isoladas, evitando o acoplamento indevido e facilitando a manutenção evolutiva.
+2. Pilares Arquiteturais
+
+🧱 Domain-Driven Design (DDD): A estrutura do sistema é segmentada em Bounded Contexts (Contextos Delimitados), garantindo que cada fase do processo licitatório possua modelos, entidades e regras de negócio isoladas, evitando o acoplamento indevido e facilitando a manutenção evolutiva.
 
 🔀 Separação de Responsabilidades (SoC)
     - Interface Layer (APIs): Orquestração de rotas e serialização de dados.
     - Application Services: Gerenciamento de fluxos e orquestração de transições.
     - Domain Rules: O "Coração do Negócio". Validações críticas e invariantes residem estritamente em módulos de rules.py e services.py.
     
-🕒 Audit-by-Design (Timeline Transversal)Diferente de logs convencionais, a Timeline é uma implementação inspirada em Event Sourcing, onde cada alteração relevante de estado é capturada como um evento de negócio. Isso garante uma base sólida para compliance e auditorias forenses.
+🕒 Audit-by-Design (Timeline Transversal): Diferente de logs convencionais, a Timeline é uma implementação inspirada em Event Sourcing, onde cada alteração relevante de estado é capturada como um evento de negócio. Isso garante uma base sólida para compliance e auditorias forenses.
 
-🎯 Granularidade de DecisãoO motor decisório opera na escala do Item. Ao isolar variáveis como markup, preço real e margem de contribuição por unidade, eliminamos distorções estatísticas comuns em análises baseadas em médias agregadas.
+🎯 Granularidade de Decisão: O motor decisório opera na escala do Item. Ao isolar variáveis como markup, preço real e margem de contribuição por unidade, eliminamos distorções estatísticas comuns em análises baseadas em médias agregadas.
 
 3. Ecossistema de Domínios
     - Captação: Ingestão e catalogação de oportunidades (UASG, Portais, Cronograma).
@@ -31,19 +33,29 @@ Arquitetado para atender às rigorosas demandas da Lei 14.133/21, o projeto foca
 
 4. Matriz de Maturidade do Projeto 
 Backend (Python/FastAPI)
- [x] Arquitetura Base: Consolidada (DDD/Clean Arch).
- [x] Domínios Core: Implementados (Captação a Empenhos).
- [x] Timeline Service: Funcional e integrado.
- [ ] Observabilidade: Alertas automáticos e monitoramento de eventos.
- [ ] Quality Assurance: Testes unitários e de integração (Pytest).
+
+       [x] Arquitetura Base: Consolidada (DDD/Clean Arch).
+         
+       [x] Domínios Core: Implementados (Captação a Empenhos).
+         
+       [x] Timeline Service: Funcional e integrado.
+         
+       [ ] Observabilidade: Alertas automáticos e monitoramento de eventos.
+         
+       [ ] Quality Assurance: Testes unitários e de integração (Pytest).
  
 Frontend (React/TypeScript)
- [x] Core Engine: Arquitetura base e Context API.
- [x] Auth & Session: Gestão de tokens e contexto de usuário.
- [x] Feature Captation: Implementada com estado controlado.
- [ ] API Integration: Em progresso (Axios/React Query).
- 
+
+       [x] Core Engine: Arquitetura base e Context API.
+          
+       [x] Auth & Session: Gestão de tokens e contexto de usuário.
+         
+       [x] Feature Captation: Implementada com estado controlado.
+          
+       [ ] API Integration: Em progresso (Axios/React Query).
+    
  5. Especificações Técnicas e Invariantes
+ 
  🔒 Regra de Ouro (State Management)
  Toda e qualquer transição de estado no ecossistema deve, obrigatoriamente:
      1) Validar as Business Rules do domínio específico.
