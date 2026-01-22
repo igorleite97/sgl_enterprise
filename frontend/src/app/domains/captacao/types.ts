@@ -7,14 +7,14 @@ export interface CaptacaoInput {
   orgao: string;
   portal: PortalCompras;
   data_hora_disputa: string;
-  itens: any[];
+  itens: ItemCaptado[];
 }
 
 export type ItemCaptado = {
   id?: string; // gerado no backend
   numero_item: string;
   subgrupo: string;
-  valor_referencia: number; 
+  valor_referencia: number | null;
   quantidade: number;
 };
 
@@ -24,13 +24,16 @@ export type ProcessoCaptado = CaptacaoInput & {
   criado_em: string;
 };
 
-// Status do processo conforme backend
+// Status do processo conforme Backend
 export type StatusProcesso =
-  | "CAPTADO"
+  | "CAPTACAO"
   | "ANALISE_EDITAL"
+  | "ANALISE_APROVADA"
+  | "DESISTENCIA"
   | "COTACAO"
+  | "COTACAO_INICIADA"
+  | "COTACAO_ENCERRADA"
   | "DISPUTA"
   | "POS_PREGAO"
-  | "CONTRATO"
-  | "EMPENHO"
-  | "ENCERRADO";
+  | "CONTRATO";
+

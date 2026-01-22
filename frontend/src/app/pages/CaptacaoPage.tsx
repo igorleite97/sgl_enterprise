@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { registrarCaptacao } from "@/app/domains/captacao/services";
-import type { CaptacaoInput, PortalCompras } from "@/app/domains/captacao/types";
+import { ItemCaptado, type CaptacaoInput, type PortalCompras } from "@/app/domains/captacao/types";
 
 export function CaptacaoPage() {
   const { user } = useAuth();
@@ -13,35 +13,54 @@ export function CaptacaoPage() {
   const [dataHoraDisputa, setDataHoraDisputa] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!portal) {
-  alert("Selecione o portal de compras");
-  return;
+  const [itens, setItens] = useState<ItemCaptado[]>([]);
+
+  function adicionarItem() {
+  setItens((prev) => [
+    ...prev,
+    {
+      numero_item: "",
+      subgrupo: "",
+      valor_referencia: null,
+      quantidade: 1,
+    },
+  ]);
 }
-    const payload: CaptacaoInput = {
-      numero_processo: numeroProcesso,
-      uasg,
-      orgao,
-      portal, // agora 100% compatível
-      data_hora_disputa: dataHoraDisputa,
-      itens: [], 
-    };
 
-    try {
-      setLoading(true);
-      const processo = await registrarCaptacao(payload);
+function removerItem(index: number) {
+  setItens((prev) => prev.filter((_, i) => i !== index));
+}
 
-      console.log("Processo criado:", processo);
+  function handleSubmit() {
+  if (!user) return;
 
-      // próximo passo: navegação por ID real
-      // navigate(`/captacao/${processo.id}`);
-    } catch (error) {
-      console.error("Erro ao registrar captação", error);
-    } finally {
-      setLoading(false);
+  // 🔒 Validação mínima de UI
+  if (itens.length === 0) {
+    alert("Informe ao menos um item licitado");
+    return;
+  }
+
+  for (const item of itens) {
+    if (!item.numero_item || !item.subgrupo || !item.quantidade) {
+      alert(
+        "Todos os itens devem conter número do item, subgrupo e quantidade"
+      );
+      return;
     }
   }
+
+  const payload: CaptacaoInput = {
+    numero_processo: numeroProcesso,
+    uasg,
+    orgao,
+    portal: portal as "COMPRASNET" | "COMPRAS_PUBLICAS",
+    data_hora_disputa: dataHoraDisputa,
+    itens,
+  };
+
+  // chamada real ao backend
+}
+
 
   return (
     <div style={{ padding: 32 }}>
@@ -80,6 +99,7 @@ export function CaptacaoPage() {
           value={orgao}
           onChange={(e) => setOrgao(e.target.value)}
           required
+
         />
 
         <label>
@@ -104,8 +124,77 @@ export function CaptacaoPage() {
           required
         />
 
+<h3>Itens Licitados</h3>
+
+{itens.map((item, index) => (
+  <div
+    key={index}
+    style={{
+      border: "1px solid #e5e7eb",
+      padding: 12,
+      borderRadius: 6,
+    }}
+  >
+    <input
+      placeholder="Número do Item"
+      value={item.numero_item}
+      onChange={(e) => {
+        const copia = [...itens];
+        copia[index].numero_item = e.target.value;
+        setItens(copia);
+      }}
+      required
+    />
+
+    <input
+      placeholder="Subgrupo (ex: Notebook)"
+      value={item.subgrupo}
+      onChange={(e) => {
+        const copia = [...itens];
+        copia[index].subgrupo = e.target.value;
+        setItens(copia);
+      }}
+      required
+    />
+
+    <input
+      type="number"
+      placeholder="Valor de Referência (opcional)"
+      value={item.valor_referencia ?? ""}
+      onChange={(e) => {
+        const copia = [...itens];
+        copia[index].valor_referencia = e.target.value
+          ? Number(e.target.value)
+          : null;
+        setItens(copia);
+      }}
+    />
+
+    <input
+      type="number"
+      placeholder="Quantidade"
+      value={item.quantidade}
+      onChange={(e) => {
+        const copia = [...itens];
+        copia[index].quantidade = Number(e.target.value);
+        setItens(copia);
+      }}
+      required
+    />
+
+    <button type="button" onClick={() => removerItem(index)}>
+      Remover Item
+    </button>
+  </div>
+))}
+
+<button type="button" onClick={adicionarItem}>
+  + Adicionar Item
+</button>
+
         <button type="submit" disabled={loading}>
           {loading ? "Registrando..." : "Registrar Captação"}
+
         </button>
       </form>
     </div>
