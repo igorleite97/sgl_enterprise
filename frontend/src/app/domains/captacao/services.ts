@@ -2,14 +2,14 @@ import type {
   CaptacaoInput,
   ProcessoCaptado,
   StatusProcesso,
-} from "./models";
+} from "./types";
 
-import { api } from "../../infra/api";
+import { api } from "@/app/infra/api";
 
 export async function registrarCaptacao(
-  data: CaptacaoInput
+  payload: CaptacaoInput
 ): Promise<ProcessoCaptado> {
-  const response = await api.post("/captacao", data);
+  const response = await api.post("/captacao", payload);
   return response.data;
 }
 
