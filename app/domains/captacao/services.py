@@ -5,21 +5,34 @@ from app.core.enums import StatusProcesso
 from app.domains.captacao.models import CaptacaoInput, ProcessoCaptado
 from app.domains.timeline.services import registrar_evento_timeline
 from app.domains.timeline.enums import TipoEventoTimeline, SeveridadeEvento
+from app.domains.captacao.exceptions import ProcessoDuplicadoError
+from app.domains.captacao.utils import normalizar_numero_processo
+from app.db.memory import db
 
 
 def registrar_captacao(
     data: CaptacaoInput,
     usuario: str,
 ) -> ProcessoCaptado:
-    """
-    Registra uma nova captação e cria o primeiro evento de auditoria.
-    """
+
+    numero_processo_normalizado = normalizar_numero_processo(
+        data.numero_processo
+    )
+
+    uasg_normalizada = data.uasg.strip()
+
+    for existente in db["oportunidades"]:
+        if (
+            existente.uasg == uasg_normalizada
+            and existente.numero_processo == numero_processo_normalizado
+        ):
+            raise ProcessoDuplicadoError(processo_id=existente.id)
 
     processo = ProcessoCaptado(
         id=str(uuid.uuid4())[:8],
-        numero_processo=data.numero_processo,
-        uasg=data.uasg,
-        orgao=data.orgao,
+        numero_processo=numero_processo_normalizado,
+        uasg=uasg_normalizada,
+        orgao=data.orgao.strip(),
         portal=data.portal,
         data_hora_disputa=data.data_hora_disputa,
         status=StatusProcesso.IDENTIFICADA,
@@ -29,7 +42,6 @@ def registrar_captacao(
 
     db["oportunidades"].append(processo)
 
-    # 📌 Evento inicial de auditoria
     registrar_evento_timeline(
         entidade="CAPTACAO",
         entidade_id=processo.id,
@@ -40,6 +52,17 @@ def registrar_captacao(
     )
 
     return processo
+
+import re
+
+def normalizar_numero_processo(numero: str) -> str:
+    """
+    Normaliza o número do processo para evitar duplicidade lógica.
+    Ex: 90012/2026, 90012-2026, 90012 2026 -> 90012-2026
+    """
+    numero = numero.strip().upper()
+    numero = re.sub(r"[\/\\_\s]+", "-", numero)
+    return numero
 
 
 def alterar_status_captacao(

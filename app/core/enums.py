@@ -5,6 +5,7 @@ from enum import Enum
 # MACROFLUXO DO PROCESSO
 # =========================
 class StatusProcesso(str, Enum):
+    IDENTIFICA = "IDENTIFICA"
     CAPTACAO = "CAPTACAO"
     ANALISE_EDITAL = "ANALISE_EDITAL"
     ANALISE_APROVADA = "ANALISE_APROVADA"
