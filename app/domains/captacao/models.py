@@ -34,4 +34,4 @@ class ProcessoCaptado(BaseModel):
     data_hora_disputa: datetime
     status: StatusProcesso
     itens: List[ItemCaptado]
-    criado_em: str
+    criado_em: datetime

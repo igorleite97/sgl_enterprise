@@ -5,7 +5,7 @@ from app.core.enums import StatusProcesso
 from app.domains.captacao.models import CaptacaoInput, ProcessoCaptado
 from app.domains.timeline.services import registrar_evento_timeline
 from app.domains.timeline.enums import TipoEventoTimeline, SeveridadeEvento
-from app.domains.captacao.exceptions import ProcessoDuplicadoError
+from app.domains.captacao.exceptions import CaptacaoDuplicadaException
 from app.domains.captacao.utils import normalizar_numero_processo
 from app.db.memory import db
 
@@ -18,15 +18,26 @@ def registrar_captacao(
     numero_processo_normalizado = normalizar_numero_processo(
         data.numero_processo
     )
-
     uasg_normalizada = data.uasg.strip()
 
     for existente in db["oportunidades"]:
+        uasg_existente = (
+            existente.uasg if hasattr(existente, "uasg") else existente["uasg"]
+        )
+        processo_existente = (
+            existente.numero_processo
+            if hasattr(existente, "numero_processo")
+            else existente["numero_processo"]
+        )
+        processo_id = (
+            existente.id if hasattr(existente, "id") else existente["id"]
+        )
+
         if (
-            existente.uasg == uasg_normalizada
-            and existente.numero_processo == numero_processo_normalizado
+            uasg_existente == uasg_normalizada
+            and processo_existente == numero_processo_normalizado
         ):
-            raise ProcessoDuplicadoError(processo_id=existente.id)
+            raise CaptacaoDuplicadaException(processo_id=existente.id)
 
     processo = ProcessoCaptado(
         id=str(uuid.uuid4())[:8],
@@ -35,7 +46,7 @@ def registrar_captacao(
         orgao=data.orgao.strip(),
         portal=data.portal,
         data_hora_disputa=data.data_hora_disputa,
-        status=StatusProcesso.IDENTIFICADA,
+        status=StatusProcesso.CAPTACAO,
         criado_em=now(),
         itens=[item.model_dump() for item in data.itens],
     )
@@ -52,18 +63,6 @@ def registrar_captacao(
     )
 
     return processo
-
-import re
-
-def normalizar_numero_processo(numero: str) -> str:
-    """
-    Normaliza o número do processo para evitar duplicidade lógica.
-    Ex: 90012/2026, 90012-2026, 90012 2026 -> 90012-2026
-    """
-    numero = numero.strip().upper()
-    numero = re.sub(r"[\/\\_\s]+", "-", numero)
-    return numero
-
 
 def alterar_status_captacao(
     captacao: ProcessoCaptado,
