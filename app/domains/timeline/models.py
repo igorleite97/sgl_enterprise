@@ -5,15 +5,12 @@ from app.domains.timeline.enums import TipoEventoTimeline, SeveridadeEvento
 @dataclass
 class EventoTimeline:
     id: int
+    entidade_tipo: str
+    entidade_id: str | int
 
-    tipo: TipoEventoTimeline
+    tipo_evento: TipoEventoTimeline
     severidade: SeveridadeEvento
 
-    entidade_id: str
-    entidade_tipo: str
-
-    titulo: str
     descricao: str
-
     usuario: str | None
     criado_em: datetime

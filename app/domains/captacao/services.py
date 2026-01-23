@@ -98,3 +98,14 @@ def alterar_status_captacao(
         severidade=SeveridadeEvento.INFO,
         usuario=usuario,
     )
+
+def obter_captacao_por_id(captacao_id: str) -> ProcessoCaptado:
+    for captacao in db["oportunidades"]:
+        captacao_id_existente = (
+            captacao.id if hasattr(captacao, "id") else captacao["id"]
+        )
+
+        if captacao_id_existente == captacao_id:
+            return captacao
+
+    raise ValueError("Captação não encontrada")

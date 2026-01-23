@@ -2,6 +2,7 @@ import type {
   CaptacaoInput,
   ProcessoCaptado,
   StatusProcesso,
+  EventoTimeline,
 } from "./types";
 
 import { api } from "@/app/infra/api";
@@ -13,10 +14,12 @@ export async function registrarCaptacao(payload: CaptacaoInput) {
     return response.data;
   } catch (error: any) {
     if (axios.isAxiosError(error) && error.response?.status === 409) {
+      const detail = error.response.data.detail;
+
       throw {
-        tipo: "CAPTACAO_DUPLICADA",
-        processoId: error.response.data.processo_id,
-        mensagem: error.response.data.message,
+        tipo: detail.tipo,
+        mensagem: detail.mensagem,
+        processoId: detail.processoId,
       };
     }
 
@@ -38,4 +41,23 @@ export async function alterarStatusCaptacao(
     status: novoStatus,
     justificativa,
   });
+}
+
+export async function obterCaptacaoPorId(
+  captacaoId: string
+): Promise<ProcessoCaptado> {
+  const response = await api.get<ProcessoCaptado>(
+    `/captacao/${captacaoId}`
+  );
+
+  return response.data;
+}
+
+export async function obterTimelineCaptacao(
+  captacaoId: string
+): Promise<EventoTimeline[]> {
+  const response = await api.get(
+    `/timeline/captacao/${captacaoId}`
+  );
+  return response.data;
 }

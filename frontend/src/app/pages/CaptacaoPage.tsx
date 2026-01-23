@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { registrarCaptacao } from "@/app/domains/captacao/services";
+import { useNavigate } from "react-router-dom";
 import { ItemCaptado, type CaptacaoInput, type PortalCompras } from "@/app/domains/captacao/types";
 
 export function CaptacaoPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [numeroProcesso, setNumeroProcesso] = useState("");
   const [uasg, setUasg] = useState("");
@@ -196,6 +198,11 @@ function removerItem(index: number) {
           {loading ? "Registrando..." : "Registrar Captação"}
 
         </button>
+      <button
+          onClick={() => navigate(`/captacao/${captacao.id}/analise-edital`)}>
+          Iniciar Análise de Edital
+</button>
+    
       </form>
     </div>
   );

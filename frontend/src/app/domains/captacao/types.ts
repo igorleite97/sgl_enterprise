@@ -20,9 +20,20 @@ export type ItemCaptado = {
 
 export type ProcessoCaptado = CaptacaoInput & {
   id: string;
-  status: string;
+  status: StatusProcesso;
   criado_em: string;
 };
+
+export type EventoTimeline = {
+  id: string;
+  data_hora: string;
+  tipo_evento: string;
+  descricao: string;
+  severidade: "INFO" | "ALERTA" | "CRITICO"
+  usuario: string;
+
+};
+
 
 // Status do processo conforme Backend
 export type StatusProcesso =
