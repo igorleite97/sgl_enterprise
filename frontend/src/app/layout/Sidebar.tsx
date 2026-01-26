@@ -1,41 +1,72 @@
 import { NavLink } from "react-router-dom";
 
-const menu = [
-  { label: "Dashboard", path: "/" },
-  { label: "Captação", path: "/captacao" },
-  { label: "Editais", path: "/editais" },
-  { label: "Cotações", path: "/cotacoes" },
-  { label: "Disputa", path: "/disputa" },
-  { label: "Pós-Pregão", path: "/pos-pregao" },
-  { label: "Contratos", path: "/contratos" },
-];
+const linkStyle = ({ isActive }: { isActive: boolean }) => ({
+  display: "block",
+  padding: "8px 12px",
+  borderRadius: 6,
+  textDecoration: "none",
+  color: isActive ? "#072b7a" : "#002677",
+  backgroundColor: isActive ? "#dadbdb" : "transparent",
+  fontWeight: isActive ? 600 : 400,
+});
 
 export function Sidebar() {
   return (
-    <aside
-      style={{
-        width: 240,
-        background: "#1f2d3d",
-        color: "#e6e6e6ec",
-        padding: 20,
-      }}
-    >
-      <h2 style={{ marginBottom: 24 }}>SGL</h2>
+    <aside style={{ width: 260, padding: 16, borderRight: "1px solid #e5e7eb" }}>
+      <h3 style={{ marginBottom: 16 }}>SGL Enterprise</h3>
 
-      <nav style={{ display: "flex", flexDirection: "column", gap: 15 }}>
-        {menu.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            style={({ isActive }) => ({
-              color: isActive ? "#3371bd" : "#eeeeee",
-              textDecoration: "none",
-              fontWeight: isActive ? "bold" : "normal",
-            })}
-          >
-            {item.label}
+      <nav style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* DASHBOARD */}
+        <div>
+          <NavLink to="/dashboard" style={linkStyle}>
+            Dashboard
           </NavLink>
-        ))}
+        </div>
+
+        {/* PROCESSOS */}
+        <div>
+          <p style={{ fontSize: 12, fontWeight: 600, color: "#6b7280" }}>
+            MÓDULOS DE PROCESSOS
+          </p>
+          <NavLink to="/captacao" style={linkStyle}>
+            Captação
+          </NavLink>
+          <NavLink to="/analise-edital" style={linkStyle}>
+            Análise de Edital
+          </NavLink>
+          <NavLink to="/cotacao" style={linkStyle}>
+            Cotação
+          </NavLink>
+          <NavLink to="/disputa" style={linkStyle}>
+            Disputa
+          </NavLink>
+          <NavLink to="/pos-pregao" style={linkStyle}>
+            Pós-Pregão
+          </NavLink>
+        </div>
+
+        {/* EXECUÇÃO */}
+        <div>
+          <p style={{ fontSize: 12, fontWeight: 600, color: "#6b7280" }}>
+            EXECUÇÃO
+          </p>
+          <NavLink to="/contratos" style={linkStyle}>
+            Contratos
+          </NavLink>
+          <NavLink to="/empenhos" style={linkStyle}>
+            Empenhos
+          </NavLink>
+        </div>
+
+        {/* GESTÃO */}
+        <div>
+          <p style={{ fontSize: 12, fontWeight: 600, color: "#6b7280" }}>
+            GESTÃO
+          </p>
+          <NavLink to="/indicadores" style={linkStyle}>
+            Indicadores
+          </NavLink>
+        </div>
       </nav>
     </aside>
   );

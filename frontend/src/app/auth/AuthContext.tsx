@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 
 export type Role = "ANALISTA" | "GESTOR" | "ADMIN";
@@ -11,6 +11,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  loading: boolean;
   login: (role: Role) => void;
   logout: () => void;
 }
@@ -19,16 +20,26 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // 🔁 Restaura sessão
+  useEffect(() => {
+    const saved = localStorage.getItem("sgl:user");
+    if (saved) {
+      setUser(JSON.parse(saved));
+    }
+    setLoading(false);
+  }, []);
 
   function login(role: Role) {
-    setUser({
-      nome: "Usuário Mock",
-      role,
-    });
+    const user = { nome: "Usuário Mock", role };
+    setUser(user);
+    localStorage.setItem("sgl:user", JSON.stringify(user));
   }
 
   function logout() {
     setUser(null);
+    localStorage.removeItem("sgl:user");
   }
 
   return (
@@ -36,6 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         isAuthenticated: !!user,
+        loading,
         login,
         logout,
       }}

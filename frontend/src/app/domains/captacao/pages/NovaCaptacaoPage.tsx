@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 
-import { registrarCaptacao } from "../domains/captacao/services";
-import type { CaptacaoInput } from "../domains/captacao/types";
+import { registrarCaptacao } from "../services";
+import type { CaptacaoInput } from "../types";
 
 export function NovaCaptacaoPage() {
   const navigate = useNavigate();

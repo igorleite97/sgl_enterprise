@@ -1,12 +1,10 @@
-// src/app/domains/analiseEdital/services.ts
-
 import { api } from "@/app/infra/api";
-import type { AnaliseEdital, AnaliseEditalCreate } from "./types";
+import type { AnaliseEdital, AnaliseEditalCreateInput } from "./types";
 
 export async function criarAnaliseEdital(
-  payload: AnaliseEditalCreate
+  data: AnaliseEditalCreateInput
 ): Promise<AnaliseEdital> {
-  const response = await api.post("/analise-edital", payload);
+  const response = await api.post("/analise-edital", data);
   return response.data;
 }
 
@@ -24,4 +22,15 @@ export async function listarAnalisesPorOportunidade(
     `/analise-edital/por-oportunidade/${oportunidadeId}`
   );
   return response.data;
+}
+
+// Evita duplicidade
+export async function obterAnalisePorOportunidade(
+  oportunidadeId: string
+): Promise<AnaliseEdital | null> {
+  const response = await api.get(
+    `/analise-edital/por-oportunidade/${oportunidadeId}`
+  );
+
+  return response.data.length > 0 ? response.data[0] : null;
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "@/app/auth/AuthContext";
 import { registrarCaptacao } from "@/app/domains/captacao/services";
 import { useNavigate } from "react-router-dom";
 import { ItemCaptado, type CaptacaoInput, type PortalCompras } from "@/app/domains/captacao/types";
@@ -33,23 +33,10 @@ function removerItem(index: number) {
   setItens((prev) => prev.filter((_, i) => i !== index));
 }
 
-  function handleSubmit() {
+function handleSubmit() {
   if (!user) return;
 
-  // 🔒 Validação mínima de UI
-  if (itens.length === 0) {
-    alert("Informe ao menos um item licitado");
-    return;
-  }
-
-  for (const item of itens) {
-    if (!item.numero_item || !item.subgrupo || !item.quantidade) {
-      alert(
-        "Todos os itens devem conter número do item, subgrupo e quantidade"
-      );
-      return;
-    }
-  }
+  // validações ...
 
   const payload: CaptacaoInput = {
     numero_processo: numeroProcesso,
@@ -60,7 +47,13 @@ function removerItem(index: number) {
     itens,
   };
 
-  // chamada real ao backend
+  setLoading(true);
+
+  registrarCaptacao(payload)
+    .then((processoCriado) => {
+      navigate(`/captacao/${processoCriado.id}`);
+    })
+    .finally(() => setLoading(false));
 }
 
 
@@ -198,10 +191,6 @@ function removerItem(index: number) {
           {loading ? "Registrando..." : "Registrar Captação"}
 
         </button>
-      <button
-          onClick={() => navigate(`/captacao/${captacao.id}/analise-edital`)}>
-          Iniciar Análise de Edital
-</button>
     
       </form>
     </div>
