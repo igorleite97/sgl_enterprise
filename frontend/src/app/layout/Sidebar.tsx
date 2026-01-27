@@ -48,7 +48,7 @@ export function Sidebar() {
         {/* EXECUÇÃO */}
         <div>
           <p style={{ fontSize: 12, fontWeight: 600, color: "#6b7280" }}>
-            EXECUÇÃO
+            MÓDULOS DE EXECUÇÃO
           </p>
           <NavLink to="/contratos" style={linkStyle}>
             Contratos
@@ -61,7 +61,7 @@ export function Sidebar() {
         {/* GESTÃO */}
         <div>
           <p style={{ fontSize: 12, fontWeight: 600, color: "#6b7280" }}>
-            GESTÃO
+            MÓDULO DE GESTÃO
           </p>
           <NavLink to="/indicadores" style={linkStyle}>
             Indicadores

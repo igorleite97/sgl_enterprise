@@ -1,21 +1,38 @@
-import { Navigate } from "react-router-dom";
-import { useAuth } from "@/app/auth/AuthContext";
-import type { ReactNode } from "react";
+// src/app/router/AppRouter.tsx
+import { Routes, Route } from "react-router-dom";
 
-export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
+import { ProtectedRoute } from "@/app/router/ProtectedRoute";
+import { AppLayout } from "@/app/layout/AppLayout";
 
-  console.log("AUTH STATE", { loading, isAuthenticated: !!user });
+import { DashboardPage } from "@/app/domains/dashboard/pages/DashboardPage";
+import { CaptacaoPage } from "@/app/domains/captacao/pages/CaptacaoPage";
+import { CaptacaoDetalhePage } from "@/app/domains/captacao/pages/CaptacaoDetalhePage";
 
-  // ⏳ Enquanto restaura sessão, não decide nada
-  if (loading) {
-    return <p>Carregando sessão...</p>;
-  }
+import { EditalListPage } from "@/app/domains/analiseEdital/pages/EditalListPage";
+import { CotacaoListPage } from "@/app/domains/cotacao/pages/CotacaoListPage";
 
-  // 🔒 Só bloqueia se realmente NÃO houver usuário
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+export function AppRouter() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
 
-  return <>{children}</>;
+      <Route
+        element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/" element={<DashboardPage />} />
+
+        <Route path="/captacao" element={<CaptacaoPage />} />
+        <Route path="/captacao/:id" element={<CaptacaoDetalhePage />} />
+
+        <Route path="/editais" element={<EditalListPage />} />
+        <Route path="/cotacao" element={<CotacaoListPage />} />
+
+        {/* demais módulos depois */}
+      </Route>
+    </Routes>
+  );
 }
