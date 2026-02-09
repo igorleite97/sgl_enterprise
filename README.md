@@ -29,6 +29,5 @@ O **SGL Enterprise** é uma plataforma corporativa **End-to-End** para gestão d
 - [ ] Integração API (Axios/React Query)
 
 ## Como Executar (Dev)
-> Ajuste conforme seus scripts reais.
 - Backend: `uvicorn app.main:app --reload`
 - Frontend: `npm install && npm run dev`
