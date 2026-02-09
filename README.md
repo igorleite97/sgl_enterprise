@@ -18,7 +18,7 @@ O **SGL Enterprise** é uma plataforma corporativa **End-to-End** para gestão d
 
 ## Stack
 - Backend: **Python 3.12+**, **FastAPI** (async), repositórios in-memory prontos para SQLAlchemy/PostgreSQL
-- Frontend: **React**, **TypeScript**, **Tailwind CSS**
+- Frontend: **TypeScript**, **React**, **Tailwind CSS**
 
 ## Status do Projeto
 - [x] Arquitetura Base (DDD/Clean)
