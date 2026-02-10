@@ -1,14 +1,114 @@
-# Python cache
+# ============================================
+# PYTHON
+# ============================================
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 
-# Virtual environments
+# C extensions
+*.c
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff (se usar Django no futuro):
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff (se usar Flask):
+instance/
+.webassets-cache
+
+# Scrapy stuff (se usar):
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# ============================================
+# AMBIENTES VIRTUAIS (CRÍTICO!)
+# ============================================
 .venv/
 venv/
 env/
+ENV/
+env.bak/
+venv.bak/
 
-# IDE
-.vscode/
-.idea/
+# ============================================
+# VARIÁVEIS DE AMBIENTE (CRÍTICO!)
+# ============================================
+.env
+.env.*
+!.env.example
+*.env
+.env.local
+.env.production
+.env.development
+.env.test
+config.ini
+secrets.yml
+credentials.json
+
+# ============================================
+# BANCO DE DADOS (CRÍTICO!)
+# ===========================================
