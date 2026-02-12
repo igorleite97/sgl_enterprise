@@ -9,6 +9,9 @@ import { CaptacaoDetalhePage } from "@/app/domains/captacao/pages/CaptacaoDetalh
 import { AnaliseEditalListPage } from "@/app/domains/analiseEdital/pages/AnaliseEditalListPage";
 import { AnaliseEditalPage } from "@/app//domains/analiseEdital/pages/AnaliseEditalPage";
 
+import { CotacaoListPage } from "@/app/domains/cotacao/pages/CotacaoListPage";
+
+
 import { ProtectedRoute } from "@/app/router/ProtectedRoute";
 import { AppLayout } from "@/app/layout/AppLayout";
 
@@ -30,7 +33,8 @@ export function AppRouter() {
           <Route path="captacao/:id" element={<CaptacaoDetalhePage />} />
 
           <Route path="analise-edital" element={<AnaliseEditalListPage />} />
-          <Route path="captacao/:id/analise-edital" element={<AnaliseEditalPage />} />
+          <Route path="captacao/:id/analise-edital" element={<AnaliseEditalPage />}/>
+          <Route path="cotacao" element={<CotacaoListPage />} />
         </Route>
       </Route>
 
