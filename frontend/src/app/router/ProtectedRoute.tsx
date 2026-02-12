@@ -1,38 +1,15 @@
-// src/app/router/AppRouter.tsx
-import { Routes, Route } from "react-router-dom";
+// src/app/router/ProtectedRoute.tsx
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "@/app/auth/AuthContext";
 
-import { ProtectedRoute } from "@/app/router/ProtectedRoute";
-import { AppLayout } from "@/app/layout/AppLayout";
+export function ProtectedRoute() {
+  const { isAuthenticated, loading } = useAuth();
 
-import { DashboardPage } from "@/app/domains/dashboard/pages/DashboardPage";
-import { CaptacaoPage } from "@/app/domains/captacao/pages/CaptacaoPage";
-import { CaptacaoDetalhePage } from "@/app/domains/captacao/pages/CaptacaoDetalhePage";
+  if (loading) {
+    return <div style={{ padding: 24 }}>Carregando...</div>;
+  }
 
-import { EditalListPage } from "@/app/domains/analiseEdital/pages/EditalListPage";
-import { CotacaoListPage } from "@/app/domains/cotacao/pages/CotacaoListPage";
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-export function AppRouter() {
-  return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-
-      <Route
-        element={
-          <ProtectedRoute>
-            <AppLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="/" element={<DashboardPage />} />
-
-        <Route path="/captacao" element={<CaptacaoPage />} />
-        <Route path="/captacao/:id" element={<CaptacaoDetalhePage />} />
-
-        <Route path="/editais" element={<EditalListPage />} />
-        <Route path="/cotacao" element={<CotacaoListPage />} />
-
-        {/* demais módulos depois */}
-      </Route>
-    </Routes>
-  );
+  return <Outlet />;
 }

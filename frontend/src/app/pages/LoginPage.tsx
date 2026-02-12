@@ -6,9 +6,10 @@ export function LoginPage() {
   const navigate = useNavigate();
 
   function handleLogin() {
-    login("ANALISTA");
-    navigate("/dashboard"); // ⬅️ ESSENCIAL
-  }
+  login("ANALISTA");
+  navigate("/dashboard", { replace: true });
+}
+
 
   return (
     <div style={{ padding: 32 }}>

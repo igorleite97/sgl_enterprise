@@ -1,14 +1,18 @@
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
+import { Topbar } from "./Topbar";
 
 export function AppLayout() {
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
+    <div style={{ display: "flex", height: "100vh" }}>
       <Sidebar />
 
-      <main style={{ flex: 1, background: "#f9fafb" }}>
-        <Outlet />
-      </main>
+      <div style={{ flex: 1 }}>
+        <Topbar />
+        <main style={{ padding: 24 }}>
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
