@@ -10,10 +10,11 @@ import { AnaliseEditalListPage }
   from "@/app/domains/analiseEdital/pages/AnaliseEditalListPage";
 
 import { AnaliseEditalPage } 
-  from "@/app/domains/analiseEdital/pages/AnaliseEditalPage.tsx";
+  from "@/app/domains/analiseEdital/pages/AnaliseEditalPage";
 
 import { ProtectedRoute } from "@/app/router/ProtectedRoute";
 import { AppLayout } from "@/app/layout/AppLayout";
+import { CotacaoModulePage } from "@/app/domains/cotacao/pages";
 
 export function AppRouter() {
   return (
@@ -39,6 +40,9 @@ export function AppRouter() {
           path="/captacao/:id/analise-edital"
           element={<AnaliseEditalPage />}
         />
+        {/* Cotação */}
+        <Route path="/cotacao" element={<CotacaoModulePage />} />
+
       </Route>
 
       <Route path="*" element={<LoginPage />} />

@@ -60,7 +60,7 @@ def criar_cotacao(
     if not oportunidade:
         raise HTTPException(status_code=404, detail="Oportunidade não encontrada")
 
-    if oportunidade["status"] != StatusProcesso.ANALISE_EDITAL:
+    if oportunidade["status"] != StatusProcesso.ANALISE_APROVADA:
         raise HTTPException(
             status_code=400,
             detail="Cotação só pode ser criada após análise de edital aprovada."
@@ -154,7 +154,6 @@ def alterar_status_cotacao(
         severidade=SeveridadeEvento.INFO,
         usuario=usuario,
     )
-
 
 def encerrar_cotacao(
     cotacao: Cotacao,
