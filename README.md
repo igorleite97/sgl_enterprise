@@ -11,7 +11,7 @@
 
 ---
 
-## 🎯 Visão Geral
+##  Visão Geral
 
 O **SGL Enterprise** é um ERP especializado em processos licitatórios que implementa:
 
@@ -22,7 +22,7 @@ O **SGL Enterprise** é um ERP especializado em processos licitatórios que impl
 
 ---
 
-## 🏗️ Arquitetura
+##  Arquitetura
 
 ### **Princípios de Design**
 
@@ -38,7 +38,7 @@ O **SGL Enterprise** é um ERP especializado em processos licitatórios que impl
 
 ---
 
-## 🛠️ Stack Tecnológica
+##  Stack Tecnológica
 
 ### **Backend**
 - **Linguagem:** Python 3.12+
@@ -57,7 +57,7 @@ O **SGL Enterprise** é um ERP especializado em processos licitatórios que impl
 
 ---
 
-## 📁 Estrutura do Projeto
+##  Estrutura do Projeto
 ```
 sgl_enterprise/
 ├── app/                          # Backend (FastAPI)
@@ -85,7 +85,7 @@ sgl_enterprise/
 
 ---
 
-## 🚀 Como Executar (Dev)
+##  Como Executar (Dev)
 
 ### **Pré-requisitos**
 - Python 3.12+
@@ -123,11 +123,11 @@ npm install
 npm run dev
 ```
 
-🌐 **Aplicação:** Acesse `http://localhost:5173`
+ **Aplicação:** Acesse `http://localhost:5173`
 
 ---
 
-## 🔐 Segurança e Compliance
+##  Segurança e Compliance
 
 - ✅ **Autenticação:** JWT com refresh tokens
 - ✅ **Autorização:** RBAC (Role-Based Access Control)
@@ -137,7 +137,7 @@ npm run dev
 
 ---
 
-## 📊 Status do Projeto
+##  Status do Projeto
 
 🚧 **Em desenvolvimento ativo**
 
@@ -165,7 +165,7 @@ npm run dev
 
 ---
 
-## 🧪 Testes
+##  Testes
 ```bash
 # Executar todos os testes
 pytest
@@ -190,13 +190,13 @@ pytest tests/integration/
 
 ---
 
-## 📝 Licença
+##  Licença
 
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 ---
 
-## 👨‍💻 Autor
+##  Autor
 
 **Igor Leite de Andrade**
 
